@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:cineview/onboarding_page.dart';
+import 'package:cineview/presentation/screen/onboarding_page.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
