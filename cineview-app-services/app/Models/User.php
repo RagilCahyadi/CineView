@@ -12,6 +12,10 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
+    protected $attributes = [
+        'profile_photo' => null,
+    ];
+    
     protected $fillable = [
         'name',
         'email',
@@ -22,6 +26,11 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
     ];
+
+    public function getProfilePhotoAttribute($value)
+    {
+        return $value ?? 'https://static.vecteezy.com/system/resources/previews/036/280/651/non_2x/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-illustration-vector.jpg';
+    }
 
     public function watchlist()
     {
