@@ -1,5 +1,6 @@
-import 'package:cineview/data/ononboarding_contents.dart';
-import 'package:cineview/login_page.dart';
+import 'package:cineview/data/models/ononboarding_contents.dart';
+import 'package:cineview/presentation/screen/login_page.dart';
+import 'package:cineview/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -16,7 +17,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0x26272C),
       body: Stack(
         children: [
           Positioned(
@@ -121,8 +121,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.black,
+                              backgroundColor: AppTheme.primaryColor,
+                              foregroundColor: AppTheme.textPrimary,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -159,7 +159,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       height: 8,
       width: _currentPage == index ? 24 : 8,
       decoration: BoxDecoration(
-        color: _currentPage == index ? Colors.blue : Colors.grey[800],
+        color: _currentPage == index ? AppTheme.primaryColor : AppTheme.dividerColor,
         borderRadius: BorderRadius.circular(4),
       ),
     );
