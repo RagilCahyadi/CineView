@@ -1,6 +1,6 @@
 import 'package:cineview/data/ononboarding_contents.dart';
+import 'package:cineview/login_page.dart';
 import 'package:flutter/material.dart';
-import 'package:cineview/home_page.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -57,8 +57,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               ),
                             ),
                           ),
-
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 10),
 
                           Text(
                             contents[index].title,
@@ -117,7 +116,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const HomePage(),
+                                  builder: (context) => const LoginPage(),
                                 ),
                               );
                             },
