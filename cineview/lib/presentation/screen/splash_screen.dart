@@ -1,6 +1,5 @@
 import 'dart:async';
-
-import 'package:cineview/home_pages.dart';
+import 'package:cineview/presentation/screen/onboarding_page.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -14,7 +13,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HomePage()));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const OnboardingScreen()));
     });
   }
   @override
