@@ -1,8 +1,8 @@
 import 'package:cineview/core/theme/app_theme.dart';
-import 'package:cineview/presentation/screen/home_page.dart';
+import 'package:cineview/presentation/screen/main_navigation.dart';
 import 'package:cineview/presentation/screen/register_page.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // TAMBAH
+import 'package:provider/provider.dart';
 import 'package:cineview/presentation/providers/auth_provider.dart';
 
 class LoginPage extends StatefulWidget {
@@ -20,9 +20,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _handleLogin() async {
     if (!_globalKey.currentState!.validate()) return;
-
     final authProvider = context.read<AuthProvider>();
-
     bool success = await authProvider.login(
       email: _emailCtrl.text.trim(),
       password: _passwordCtrl.text,
@@ -31,8 +29,10 @@ class _LoginPageState extends State<LoginPage> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Login berhasil",
-          style: TextStyle(color: AppTheme.textPrimary),),
+          content: const Text(
+            "Login berhasil",
+            style: TextStyle(color: AppTheme.textPrimary),
+          ),
           backgroundColor: AppTheme.primaryColor,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -43,14 +43,16 @@ class _LoginPageState extends State<LoginPage> {
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
+        MaterialPageRoute(builder: (context) => const MainNavigation()),
         (route) => false,
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.errorMessage ?? "Login failed",
-          style: const TextStyle(color: AppTheme.textPrimary),),
+          content: Text(
+            authProvider.errorMessage ?? "Login failed",
+            style: const TextStyle(color: AppTheme.textPrimary),
+          ),
           backgroundColor: AppTheme.errorColor,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -233,28 +235,28 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         child: auth.isLoading
-                        ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                        : const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Log in",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Log in",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.arrow_forward, size: 20),
+                                ],
                               ),
-                            ),
-                            SizedBox(width: 8),
-                            Icon(Icons.arrow_forward, size: 20),
-                          ],
-                        ),
                       ),
                     );
                   },

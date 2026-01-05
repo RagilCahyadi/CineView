@@ -5,7 +5,6 @@ import 'package:cineview/data/models/dummy_data_film.dart';
 
 class WatchlistSection extends StatelessWidget {
   const WatchlistSection({super.key, required this.film});
-
   final List<DummyDataFilm> film;
 
   @override
@@ -47,7 +46,6 @@ class WatchlistSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-
         SizedBox(
           height: 200,
           child: ListView.builder(

@@ -1,3 +1,4 @@
+import 'package:cineview/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:cineview/data/models/dummy_data_actor.dart';
 
@@ -17,7 +18,7 @@ class TopActorSection extends StatelessWidget {
               const Text(
                 'Top Popular Actor',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppTheme.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -26,12 +27,15 @@ class TopActorSection extends StatelessWidget {
                 children: [
                   Text(
                     'See all',
-                    style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 14,
+                    ),
                   ),
                   const SizedBox(width: 4),
                   Icon(
                     Icons.play_circle_filled,
-                    color: Colors.deepPurple.shade300,
+                    color: AppTheme.primaryColor,
                     size: 20,
                   ),
                 ],
@@ -56,7 +60,6 @@ class TopActorSection extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildActorItem(DummyDataActor actor) {
     return Column(
       children: [
@@ -65,8 +68,8 @@ class TopActorSection extends StatelessWidget {
           height: 70,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.grey.shade700,
-            border: Border.all(color: Colors.grey.shade600, width: 2),
+            color: AppTheme.surfaceColor,
+            border: Border.all(color: AppTheme.dividerColor, width: 2),
             image: DecorationImage(
               image: AssetImage(actor.image),
               fit: BoxFit.cover,
@@ -76,12 +79,11 @@ class TopActorSection extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           actor.firstName,
-          style: const TextStyle(color: Colors.white, fontSize: 12),
+          style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
         ),
-
         Text(
           actor.lastName,
-          style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+          style: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
         ),
       ],
     );
