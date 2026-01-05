@@ -1,6 +1,9 @@
 import 'dart:async';
-import 'package:cineview/presentation/screen/onboarding_page.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:cineview/presentation/screen/onboarding_page.dart';
+import 'package:cineview/presentation/screen/home_page.dart';
+import 'package:cineview/presentation/providers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,10 +16,28 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const OnboardingScreen()));
-    });
+    _checkLoginAndNavigate();
   }
+
+  Future<void> _checkLoginAndNavigate() async{
+    await Future.delayed(const Duration(seconds: 3));
+
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.checkLoginStatus();
+
+    if(authProvider.isLoggedIn){
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    }else{
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const OnboardingScreen())
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
