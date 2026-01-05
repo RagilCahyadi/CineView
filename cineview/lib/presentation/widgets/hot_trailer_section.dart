@@ -1,3 +1,4 @@
+import 'package:cineview/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class HotTrailerSection extends StatelessWidget {
@@ -16,7 +17,7 @@ class HotTrailerSection extends StatelessWidget {
               const Text(
                 'Hot Trailer',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppTheme.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -25,12 +26,12 @@ class HotTrailerSection extends StatelessWidget {
                 children: [
                   Text(
                     'See all',
-                    style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
                   ),
                   const SizedBox(width: 4),
                   Icon(
                     Icons.play_circle_filled,
-                    color: Colors.deepPurple.shade300,
+                    color: AppTheme.primaryColor,
                     size: 20,
                   ),
                 ],
@@ -44,7 +45,7 @@ class HotTrailerSection extends StatelessWidget {
             width: double.infinity,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              color: Colors.grey.shade800,
+              color: AppTheme.surfaceColor,
             ),
             child: Stack(
               children: [
@@ -56,12 +57,12 @@ class HotTrailerSection extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
+                          color: AppTheme.dividerColor.withOpacity(0.5),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.play_arrow_rounded,
-                          color: Colors.white,
+                          color: AppTheme.primaryColor,
                           size: 24,
                         ),
                       ),
@@ -72,12 +73,12 @@ class HotTrailerSection extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
+                          color: AppTheme.dividerColor.withOpacity(0.5),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
                           'Trailer 1:30',
-                          style: TextStyle(color: Colors.white, fontSize: 12),
+                          style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
                         ),
                       ),
                     ],
