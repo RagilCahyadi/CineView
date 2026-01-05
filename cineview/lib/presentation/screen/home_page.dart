@@ -5,6 +5,8 @@ import 'package:cineview/presentation/widgets/featured_card.dart';
 import 'package:cineview/presentation/widgets/film_populer_section.dart';
 import 'package:cineview/presentation/widgets/search_bar_widget.dart';
 import 'package:cineview/presentation/widgets/watchlist_section.dart';
+import 'package:cineview/presentation/widgets/hot_trailer_section.dart';
+import 'package:cineview/presentation/widgets/top_actor_section.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -63,6 +65,11 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 10),
                 WatchlistSection(film: contents),
                 FilmPopulerSection(film: contents),
+                const SizedBox(height: 20),
+                const HotTrailerSection(),
+                const SizedBox(height: 20),
+                const TopActorSection(),
+                const SizedBox(height: 20),
               ],
             ),
           ),
