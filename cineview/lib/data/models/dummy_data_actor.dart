@@ -2,7 +2,7 @@ class DummyDataActor {
   final String firstName;
   final String lastName;
   final String image;
-
+  
   DummyDataActor({
     required this.firstName,
     required this.lastName,
