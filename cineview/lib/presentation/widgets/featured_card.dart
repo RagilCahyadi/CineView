@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/dummy_data_film.dart';
+import 'package:cineview/presentation/screen/movie_detail_screen.dart';
 
 class FeaturedCard extends StatelessWidget {
   const FeaturedCard({super.key, required this.film});
-
   final DummyDataFilm film;
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -69,7 +68,14 @@ class FeaturedCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MovieDetailScreen(film: film),
+                      ),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
                     padding: const EdgeInsets.symmetric(
