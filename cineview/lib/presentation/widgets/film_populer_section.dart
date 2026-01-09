@@ -1,6 +1,7 @@
+import 'package:cineview/presentation/screen/popular_page.dart';
 import 'package:cineview/presentation/widgets/movie_card.dart';
+import 'package:cineview/presentation/widgets/section_header.dart';
 import 'package:flutter/material.dart';
-import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/dummy_data_film.dart';
 
 class FilmPopulerSection extends StatelessWidget {
@@ -13,43 +14,19 @@ class FilmPopulerSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Film Populer",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-              Row(
-                children: [
-                  Text(
-                    "See all",
-                    style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Icon(
-                    Icons.play_circle_filled,
-                    color: AppTheme.primaryColor,
-                    size: 20,
-                  ),
-                ],
-              ),
-            ],
-          ),
+        SectionHeader(
+          title: "Film Populer",
+          onSeeAllTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const PopularPage()),
+            );
+          },
         ),
         const SizedBox(height: 16),
 
         SizedBox(
-          height: 200,
+          height: 180,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 24),

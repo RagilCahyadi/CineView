@@ -121,7 +121,7 @@ class MovieDetailScreen extends StatelessWidget {
             children: [
               _buildInfoChip('${film.duration} menit'),
               _buildInfoChip('Movie'),
-              _buildInfoChip(film.genre.split(' • ').first),
+              _buildInfoChip(film.genre.first),
               _buildInfoChip(film.ageRating),
             ],
           ),

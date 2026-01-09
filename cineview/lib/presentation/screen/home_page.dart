@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/dummy_data_film.dart';
 import 'package:cineview/presentation/screen/main_navigation.dart';
 import 'package:cineview/presentation/widgets/featured_card.dart';
 import 'package:cineview/presentation/widgets/film_populer_section.dart';
+import 'package:cineview/presentation/widgets/now_playing_section.dart';
 import 'package:cineview/presentation/widgets/search_bar_widget.dart';
 import 'package:cineview/presentation/widgets/watchlist_section.dart';
 import 'package:cineview/presentation/widgets/hot_trailer_section.dart';
@@ -53,28 +55,26 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 100, top: 50),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SearchBarWidget(),
-                const SizedBox(height: 10),
-                _buildFeaturedCarousel(),
-                const SizedBox(height: 10),
-                WatchlistSection(film: contents),
-                FilmPopulerSection(film: contents),
-                const SizedBox(height: 20),
-                const HotTrailerSection(),
-                const SizedBox(height: 20),
-                const TopActorSection(),
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-        ],
+      backgroundColor: AppTheme.backgroundColor,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 100, top: 30),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SearchBarWidget(),
+            const SizedBox(height: 10),
+            _buildFeaturedCarousel(),
+            const SizedBox(height: 10),
+            WatchlistSection(film: contents),
+            FilmPopulerSection(film: contents),
+            const SizedBox(height: 20),
+            const HotTrailerSection(),
+            const SizedBox(height: 20),
+            const TopActorSection(),
+            const SizedBox(height: 20),
+            NowPlayingSection(film: contents),
+          ],
+        ),
       ),
     );
   }
@@ -91,7 +91,11 @@ class _HomePageState extends State<HomePage> {
           });
         },
         itemBuilder: (context, index) {
-          return FeaturedCard(film: contents[index]);
+          return FeaturedCard(
+            film: contents[index],
+            currentIndex: _currentPage,
+            totalCount: contents.length,
+          );
         },
       ),
     );
