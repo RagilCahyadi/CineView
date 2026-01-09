@@ -1,6 +1,7 @@
+import 'package:cineview/presentation/screen/watchlist_page.dart';
 import 'package:cineview/presentation/widgets/movie_card.dart';
+import 'package:cineview/presentation/widgets/section_header.dart';
 import 'package:flutter/material.dart';
-import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/dummy_data_film.dart';
 
 class WatchlistSection extends StatelessWidget {
@@ -12,38 +13,14 @@ class WatchlistSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Watchlist",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-              Row(
-                children: [
-                  Text(
-                    "See all",
-                    style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Icon(
-                    Icons.play_circle_filled,
-                    color: AppTheme.primaryColor,
-                    size: 20,
-                  ),
-                ],
-              ),
-            ],
-          ),
+        SectionHeader(
+          title: "Watchlist",
+          onSeeAllTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const WatchlistPage()),
+            );
+          },
         ),
         const SizedBox(height: 16),
         SizedBox(
