@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/dummy_data_film.dart';
-import 'package:cineview/presentation/screen/main_navigation.dart';
 import 'package:cineview/presentation/widgets/featured_card.dart';
 import 'package:cineview/presentation/widgets/film_populer_section.dart';
 import 'package:cineview/presentation/widgets/now_playing_section.dart';
