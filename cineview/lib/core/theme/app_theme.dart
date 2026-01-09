@@ -13,6 +13,7 @@ class AppTheme {
   static const Color textSecondary = Color(0xFF9CA3AF);
   static const Color starColor = Color(0xFFFBBF24);
   static const Color dividerColor = Color(0xFF2D2D3A);
+  static const Color errorColor = Color(0xFFDC2626);
 
   // Dark Theme
   static ThemeData darkTheme = ThemeData(

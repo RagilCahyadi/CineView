@@ -30,7 +30,6 @@ class AuthService {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 201) {
-        await _storageService.saveToken(data['token']);
         return {
           'success': true,
           'user': data['user'],
