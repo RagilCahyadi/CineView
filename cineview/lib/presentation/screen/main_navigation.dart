@@ -14,36 +14,30 @@ class _MainNavigationState extends State<MainNavigation> {
 
   final List<Widget> _pages = [
     const HomePage(),
-    const Center(
-      child: Text(
-        'Collection Page',
-        style: TextStyle(color: AppTheme.textPrimary),
-      ),
-    ),
-    const Center(
-      child: Text(
-        'Explore Page',
-        style: TextStyle(color: AppTheme.textPrimary),
-      ),
-    ),
-    const Center(
-      child: Text(
-        'User Profil Page',
-        style: TextStyle(color: AppTheme.textPrimary),
-      ),
-    ),
+    const _PlaceholderPage(title: 'Collection'),
+    const _PlaceholderPage(title: 'Explore'),
+    const _PlaceholderPage(title: 'Profile'),
   ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_currentIndex],
-      bottomNavigationBar: _buildBottomNavBar(),
+      body: Stack(
+        children: [
+          _pages[_currentIndex],
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 16,
+            child: _buildBottomNavBar(),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildBottomNavBar() {
     return Container(
-      margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
@@ -52,31 +46,16 @@ class _MainNavigationState extends State<MainNavigation> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildNavItem(0, Icons.home_rounded, 'Dashboard'),
-          _buildNavItem(1, Icons.format_list_bulleted_rounded, 'Users Profile'),
-          _buildNavItem(
-            2,
-            Icons.play_circle_outline_rounded,
-            'Explore',
-            reversed: true,
-          ),
-          _buildNavItem(
-            3,
-            Icons.person_outline_rounded,
-            'User Profil',
-            reversed: true,
-          ),
+          _buildNavItem(0, Icons.home_rounded, 'Home'),
+          _buildNavItem(1, Icons.format_list_bulleted_rounded, 'Collection'),
+          _buildNavItem(2, Icons.play_circle_outline_rounded, 'Explore'),
+          _buildNavItem(3, Icons.person_outline_rounded, 'Profile'),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(
-    int index,
-    IconData icon,
-    String label, {
-    bool reversed = false,
-  }) {
+  Widget _buildNavItem(int index, IconData icon, String label) {
     bool isActive = _currentIndex == index;
 
     return GestureDetector(
@@ -86,10 +65,11 @@ class _MainNavigationState extends State<MainNavigation> {
         });
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
         padding: EdgeInsets.symmetric(
           horizontal: isActive ? 16 : 12,
-          vertical: 8,
+          vertical: 10,
         ),
         decoration: BoxDecoration(
           color: isActive ? AppTheme.dividerColor : Colors.transparent,
@@ -98,30 +78,21 @@ class _MainNavigationState extends State<MainNavigation> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (isActive && label.isNotEmpty && reversed) ...[
-              Text(
-                label,
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 50),
+              width: isActive ? 36 : 28,
+              height: isActive ? 36 : 28,
+              decoration: BoxDecoration(
+                color: isActive ? AppTheme.textPrimary : Colors.transparent,
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 10),
-            ],
-            if (isActive)
-              Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  color: Colors.black,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: AppTheme.textPrimary, size: 22),
-              )
-            else
-              Icon(icon, color: AppTheme.textSecondary, size: 28),
-            if (isActive && label.isNotEmpty && !reversed) ...[
+              child: Icon(
+                icon,
+                color: isActive ? AppTheme.primaryColor : AppTheme.textSecondary,
+                size: isActive ? 20 : 24,
+              ),
+            ),
+            if (isActive) ...[
               const SizedBox(width: 10),
               Text(
                 label,
@@ -132,6 +103,47 @@ class _MainNavigationState extends State<MainNavigation> {
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PlaceholderPage extends StatelessWidget {
+  const _PlaceholderPage({required this.title});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.construction_rounded,
+              size: 64,
+              color: AppTheme.textSecondary,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '$title Page',
+              style: const TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Coming Soon',
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 16,
+              ),
+            ),
           ],
         ),
       ),

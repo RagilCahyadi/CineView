@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/dummy_data_film.dart';
 import 'package:cineview/presentation/screen/movie_detail_screen.dart';
+import 'package:stroke_text/stroke_text.dart';
 
 class FeaturedCard extends StatelessWidget {
-  const FeaturedCard({super.key, required this.film});
+  const FeaturedCard({
+    super.key,
+    required this.film,
+    required this.currentIndex,
+    required this.totalCount,
+  });
   final DummyDataFilm film;
+  final int currentIndex;
+  final int totalCount;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -28,43 +36,47 @@ class FeaturedCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              film.title,
-              style: TextStyle(
+            StrokeText(
+              text: film.title,
+              textStyle: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.textPrimary,
               ),
+              strokeColor: AppTheme.primaryColor,
+              strokeWidth: 2,
+              textAlign: TextAlign.center,
             ),
-            Text(
-              film.genre,
-              style: TextStyle(fontSize: 16, color: AppTheme.textPrimary),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: AppTheme.surfaceColor.withValues(alpha: 0.8),
+              ),
+              child: Text(
+                film.genre.join(' • '),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppTheme.textPrimary,
+                  backgroundColor: AppTheme.surfaceColor.withValues(alpha: 0.5),
+                ),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  width: 45,
+                  height: 45,
                   decoration: BoxDecoration(
+                    color: AppTheme.surfaceColor.withValues(alpha: 0.5),
                     border: Border.all(color: AppTheme.dividerColor),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Icon(Icons.add, color: AppTheme.textPrimary),
-                ),
-                const SizedBox(width: 16),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppTheme.dividerColor),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.thumb_up_outlined,
-                    color: AppTheme.textPrimary,
-                  ),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
@@ -78,8 +90,12 @@ class FeaturedCard extends StatelessWidget {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: AppTheme.textPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
+                      horizontal: 32,
                       vertical: 12,
                     ),
                   ),
@@ -89,6 +105,24 @@ class FeaturedCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+            SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                totalCount,
+                (index) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: currentIndex == index ? 16 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: currentIndex == index
+                        ? AppTheme.primaryColor
+                        : AppTheme.textSecondary.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
