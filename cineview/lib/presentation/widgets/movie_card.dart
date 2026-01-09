@@ -27,8 +27,8 @@ class MovieCard extends StatelessWidget {
           const SizedBox(height: 8),
 
           Text(
-            "${film.year} | ${film.rating} | ${film.duration}",
-            style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary),
+            "${film.year} | ${film.rated} | ${film.duration}m",
+            style: const TextStyle(fontSize: 10, color: AppTheme.textPrimary),
           ),
         ],
       ),
