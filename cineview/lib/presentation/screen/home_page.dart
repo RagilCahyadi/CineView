@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:cineview/data/models/dummy_data_film.dart';
+import 'package:cineview/presentation/screen/main_navigation.dart';
 import 'package:cineview/presentation/widgets/featured_card.dart';
 import 'package:cineview/presentation/widgets/film_populer_section.dart';
 import 'package:cineview/presentation/widgets/search_bar_widget.dart';
