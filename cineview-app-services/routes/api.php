@@ -10,6 +10,4 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::post('/logout',[AuthController::class,'logout']);
 });
 
-Route::get('/users', function () {
-    return \App\Models\User::all();
-});
+Route::get('/users', [AuthController::class, 'index']);

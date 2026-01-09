@@ -9,6 +9,42 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+
+    /**
+     * Get All Users
+     * 
+     * Mengambil daftar semua user yang terdaftar di sistem.
+     * 
+     * @response 200 {
+     *   "data": [
+     *     {"id": 1, "name": "John Doe", "email": "john@example.com", "profile_photo": null},
+     *     {"id": 2, "name": "Jane Doe", "email": "jane@example.com", "profile_photo": null}
+     *   ]
+     * }
+     */
+    public function index()
+    {
+        return response()->json([
+            'data' => User::all()
+        ]);
+    }
+
+    /**
+     * Register User
+     * 
+     * Mendaftarkan user baru ke sistem CineView dan mengembalikan token akses.
+     * 
+     * @bodyParam name string required Nama lengkap user. Example: John Doe
+     * @bodyParam email string required Email user (harus unik). Example: john@example.com
+     * @bodyParam password string required Password minimal 8 karakter. Example: password123
+     * @bodyParam password_confirmation string required Konfirmasi password. Example: password123
+     * 
+     * @response 201 {
+     *   "message": "Registration successfull",
+     *   "user": {"id": 1, "name": "John Doe", "email": "john@example.com"},
+     *   "token": "1|abc123..."
+     * }
+     */
     public function register(Request $request){
         $request->validate([
             'name'=>['required','string', 'max:255'],
@@ -31,6 +67,23 @@ class AuthController extends Controller
         ], 201);
     }   
 
+    /**
+     * Login User
+     * 
+     * Melakukan autentikasi user dan mengembalikan token akses.
+     * 
+     * @bodyParam email string required Email user yang terdaftar. Example: john@example.com
+     * @bodyParam password string required Password user. Example: password123
+     * 
+     * @response 200 {
+     *   "message": "Login succesfull",
+     *   "user": {"id": 1, "name": "John Doe", "email": "john@example.com"},
+     *   "token": "1|abc123..."
+     * }
+     * @response 401 {
+     *   "message": "Invalid credentials"
+     * }
+     */
     public function login(Request $request){
         $request->validate([
             'email'=>['required','email'],
@@ -54,6 +107,17 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * Logout User
+     * 
+     * Menghapus token akses user yang sedang login. Memerlukan Bearer Token.
+     * 
+     * @authenticated
+     * 
+     * @response 200 {
+     *   "message": "Logout succesfull"
+     * }
+     */
     public function logout(Request $request){
         $request->user()->currentAccessToken()->delete();
 
