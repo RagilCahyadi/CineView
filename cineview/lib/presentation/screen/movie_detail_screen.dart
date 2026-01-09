@@ -1,4 +1,4 @@
-import 'package:cineview/presentation/widgets/review%20_modal.dart';
+import 'package:cineview/presentation/widgets/review_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/dummy_data_film.dart';
