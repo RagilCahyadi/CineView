@@ -1,4 +1,5 @@
 import 'package:cineview/presentation/providers/auth_provider.dart';
+import 'package:cineview/presentation/screen/home_page.dart';
 import 'package:cineview/presentation/screen/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';

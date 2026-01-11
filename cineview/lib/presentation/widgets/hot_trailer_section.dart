@@ -1,4 +1,6 @@
 import 'package:cineview/core/theme/app_theme.dart';
+import 'package:cineview/presentation/screen/popular_page.dart';
+import 'package:cineview/presentation/widgets/section_header.dart';
 import 'package:flutter/material.dart';
 
 class HotTrailerSection extends StatelessWidget {
@@ -6,41 +8,22 @@ class HotTrailerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Hot Trailer',
-                style: TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Row(
-                children: [
-                  Text(
-                    'See all',
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.play_circle_filled,
-                    color: AppTheme.primaryColor,
-                    size: 20,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          Container(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: "Hot Trailer",
+          onSeeAllTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const PopularPage()),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
             height: 180,
             width: double.infinity,
             decoration: BoxDecoration(
@@ -57,7 +40,7 @@ class HotTrailerSection extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppTheme.dividerColor.withOpacity(0.5),
+                          color: AppTheme.dividerColor.withValues(alpha: 0.5),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -73,12 +56,15 @@ class HotTrailerSection extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.dividerColor.withOpacity(0.5),
+                          color: AppTheme.dividerColor.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
                           'Trailer 1:30',
-                          style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                          style: TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ],
@@ -87,8 +73,8 @@ class HotTrailerSection extends StatelessWidget {
               ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

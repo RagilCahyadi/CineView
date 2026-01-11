@@ -1,3 +1,4 @@
+import 'package:cineview/presentation/widgets/review_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/dummy_data_film.dart';
@@ -25,7 +26,7 @@ class MovieDetailScreen extends StatelessWidget {
         ),
       ),
 
-      bottomNavigationBar: _buildBottomButtons(),
+      bottomNavigationBar: _buildBottomButtons(context),
     );
   }
 
@@ -93,6 +94,7 @@ class MovieDetailScreen extends StatelessWidget {
       ],
     );
   }
+
   Widget _buildMovieInfo() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -119,7 +121,7 @@ class MovieDetailScreen extends StatelessWidget {
             children: [
               _buildInfoChip('${film.duration} menit'),
               _buildInfoChip('Movie'),
-              _buildInfoChip(film.genre.split(' • ').first),
+              _buildInfoChip(film.genre.first),
               _buildInfoChip(film.ageRating),
             ],
           ),
@@ -127,6 +129,7 @@ class MovieDetailScreen extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildInfoChip(String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -141,6 +144,7 @@ class MovieDetailScreen extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildRating() {
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -165,6 +169,7 @@ class MovieDetailScreen extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildCastSection() {
     return Column(
       children: [
@@ -255,7 +260,7 @@ class MovieDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomButtons() {
+  Widget _buildBottomButtons(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -283,7 +288,14 @@ class MovieDetailScreen extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => ReviewModal(movieTitle: film.title),
+                );
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 padding: const EdgeInsets.symmetric(vertical: 14),
