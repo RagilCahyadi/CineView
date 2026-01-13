@@ -271,7 +271,20 @@ class MovieDetailScreen extends StatelessWidget {
         children: [
           Expanded(
             child: OutlinedButton(
-              onPressed: () {},
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${film.title} added to watchlist'),
+                    backgroundColor: Colors.green,
+                    duration: const Duration(seconds: 2),
+                    action: SnackBarAction(
+                      label: 'UNDO',
+                      textColor: Colors.white,
+                      onPressed: () {},
+                    ),
+                  ),
+                );
+              },
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 side: const BorderSide(color: AppTheme.dividerColor),
@@ -293,7 +306,11 @@ class MovieDetailScreen extends StatelessWidget {
                   context: context,
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,
-                  builder: (context) => ReviewModal(movieTitle: film.title),
+                  builder: (context) => ReviewModal(
+                    movieTitle: film.title,
+                    movieID: film.id,
+                    posterPath: film.image,
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(
