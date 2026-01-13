@@ -1,6 +1,7 @@
 class DummyDataFilm {
   final String title;
   final List<String> genre;
+  final int id;
   final String image;
   final String year;
   final String rating;
@@ -14,6 +15,7 @@ class DummyDataFilm {
 
   DummyDataFilm({
     required this.title,
+    required this.id,
     required this.genre,
     required this.image,
     required this.year,
@@ -32,6 +34,7 @@ List<DummyDataFilm> contents = [
   DummyDataFilm(
     title: "A Minecraft Movie",
     genre: ['Action', 'Fantasy'],
+    id: 1,
     image: "assets/images/avatar.jpg",
     year: "2025",
     rating: "5.9",
@@ -51,6 +54,7 @@ List<DummyDataFilm> contents = [
   DummyDataFilm(
     title: "Avatar 2",
     genre: ['Sci-Fi', 'Adventure'],
+    id: 2,
     image: "assets/images/avatar.jpg",
     year: "2024",
     rating: "8.5",
@@ -70,6 +74,7 @@ List<DummyDataFilm> contents = [
   DummyDataFilm(
     title: "The Batman",
     genre: ['Action', 'Crime', 'Drama'],
+    id: 3,
     image: "assets/images/avatar.jpg",
     year: "2024",
     rating: "9.0",
@@ -89,6 +94,7 @@ List<DummyDataFilm> contents = [
   DummyDataFilm(
     title: "Dune Part Two",
     genre: ['Sci-Fi', 'Adventure'],
+    id: 4,
     image: "assets/images/avatar.jpg",
     year: "2024",
     rating: "8.8",
@@ -108,6 +114,7 @@ List<DummyDataFilm> contents = [
   DummyDataFilm(
     title: "Spider-Man: No Way Home",
     genre: ['Action', 'Adventure'],
+    id: 5,
     image: "assets/images/avatar.jpg",
     year: "2024",
     rating: "8.7",
