@@ -1,4 +1,5 @@
 import 'package:cineview/core/theme/app_theme.dart';
+import 'package:cineview/presentation/screen/watchlist_page.dart';
 import 'package:cineview/presentation/screen/home_page.dart';
 import 'package:flutter/material.dart';
 
@@ -14,7 +15,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   final List<Widget> _pages = [
     const HomePage(),
-    const _PlaceholderPage(title: 'Collection'),
+    const WatchlistPage(),
     const _PlaceholderPage(title: 'Explore'),
     const _PlaceholderPage(title: 'Profile'),
   ];
@@ -88,7 +89,9 @@ class _MainNavigationState extends State<MainNavigation> {
               ),
               child: Icon(
                 icon,
-                color: isActive ? AppTheme.primaryColor : AppTheme.textSecondary,
+                color: isActive
+                    ? AppTheme.primaryColor
+                    : AppTheme.textSecondary,
                 size: isActive ? 20 : 24,
               ),
             ),

@@ -1,9 +1,18 @@
+import 'dart:io';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ReviewModal extends StatefulWidget {
-  const ReviewModal({super.key, required this.movieTitle});
+  const ReviewModal({
+    super.key,
+    required this.movieTitle,
+    required this.movieID,
+    this.posterPath,
+  });
   final String movieTitle;
+  final int movieID;
+  final String? posterPath;
 
   @override
   State<ReviewModal> createState() => _ReviewModalState();
@@ -15,6 +24,8 @@ class _ReviewModalState extends State<ReviewModal> {
   final TextEditingController _contextController = TextEditingController();
   bool _hasError = false;
   bool _isSubmitted = false;
+  final ImagePicker _picker = ImagePicker();
+  File? _selectedImage;
 
   void _showTopNotification(
     BuildContext context,
@@ -71,6 +82,25 @@ class _ReviewModalState extends State<ReviewModal> {
     });
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 80,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      _showTopNotification(context, 'Gagal mengambil gambar', Colors.red);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -85,6 +115,27 @@ class _ReviewModalState extends State<ReviewModal> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (widget.posterPath != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                widget.posterPath!,
+                height: 80,
+                width: 60,
+                fit: BoxFit.cover,
+              ),
+            ),
+          const SizedBox(height: 12),
+          Text(
+            widget.movieTitle,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
           Text(
             _rating > 0 ? '${_rating.toDouble()}/10' : 'SCORE',
             style: const TextStyle(
@@ -186,7 +237,122 @@ class _ReviewModalState extends State<ReviewModal> {
             ),
           ),
           const SizedBox(height: 24),
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: AppTheme.surfaceColor,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
+                    ),
+                    builder: (context) => Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ListTile(
+                            leading: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.white,
+                            ),
+                            title: const Text(
+                              'Kamera',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              _pickImage(ImageSource.camera);
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(
+                              Icons.photo_library,
+                              color: Colors.white,
+                            ),
+                            title: const Text(
+                              'Galeri',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            onTap: () {
+                              Navigator.pop(context);
+                              _pickImage(ImageSource.gallery);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppTheme.primaryColor),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_a_photo, color: AppTheme.primaryColor),
+                      SizedBox(height: 4),
+                      Text(
+                        'Add Photo',
+                        style: TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
 
+              // Image Preview
+              if (_selectedImage != null)
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        _selectedImage!,
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(
+                      top: -5,
+                      right: -5,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedImage = null;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
