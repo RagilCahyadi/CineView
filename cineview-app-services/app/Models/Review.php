@@ -14,6 +14,7 @@ class Review extends Model
         'movie_id',
         'movie_title',
         'rating',
+        'context',
         'content',
         'photo_path',
     ];
