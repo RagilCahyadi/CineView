@@ -142,7 +142,10 @@ class _PlaceholderPage extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Coming Soon',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 16,
+              ),
             ),
           ],
         ),
