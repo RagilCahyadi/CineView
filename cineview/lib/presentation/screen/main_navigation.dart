@@ -1,4 +1,5 @@
 import 'package:cineview/core/theme/app_theme.dart';
+import 'package:cineview/presentation/screen/profile_page.dart';
 import 'package:cineview/presentation/screen/watchlist_page.dart';
 import 'package:cineview/presentation/screen/home_page.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +18,7 @@ class _MainNavigationState extends State<MainNavigation> {
     const HomePage(),
     const WatchlistPage(),
     const _PlaceholderPage(title: 'Explore'),
-    const _PlaceholderPage(title: 'Profile'),
+    const ProfilePage(),
   ];
 
   @override
@@ -142,10 +143,7 @@ class _PlaceholderPage extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Coming Soon',
-              style: TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
             ),
           ],
         ),
