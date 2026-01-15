@@ -9,4 +9,8 @@ class ApiConstants {
   // Watchlist
   static const String watchlist = '/watchlist';
   static const String watchlistCheck = '/watchlist/check';
+
+  // Reviews
+  static const String reviews = '/reviews';
+  static const String reviewsByMovie = '/reviews/movie';
 }
