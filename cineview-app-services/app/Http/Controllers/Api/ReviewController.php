@@ -112,7 +112,7 @@ class ReviewController extends Controller
             'context' => ['sometimes', 'string', 'max:100'],
             'content' => ['sometimes', 'string'],
             'photo_path' => ['nullable', 'string']
-        ], 404);
+        ]);
 
         $user = Auth::user();
 
