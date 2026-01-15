@@ -81,7 +81,6 @@ class _ReviewModalState extends State<ReviewModal> {
       overlayEntry.remove();
     });
   }
-
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
@@ -100,7 +99,6 @@ class _ReviewModalState extends State<ReviewModal> {
       _showTopNotification(context, 'Gagal mengambil gambar', Colors.red);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -200,7 +198,6 @@ class _ReviewModalState extends State<ReviewModal> {
             ),
           ),
           const SizedBox(height: 16),
-
           Container(
             decoration: BoxDecoration(
               border: Border.all(
@@ -311,8 +308,6 @@ class _ReviewModalState extends State<ReviewModal> {
                 ),
               ),
               const SizedBox(width: 12),
-
-              // Image Preview
               if (_selectedImage != null)
                 Stack(
                   children: [
