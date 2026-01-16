@@ -18,7 +18,7 @@ class WatchlistServices {
         },
       );
 
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body); 
 
       if (response.statusCode == 200) {
         return {
@@ -48,7 +48,7 @@ class WatchlistServices {
       final response = await http.post(
         Uri.parse('${ApiConstants.baseUrl}${ApiConstants.watchlist}'),
         headers: {
-          'Content-type': 'application/json',
+          'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
@@ -122,7 +122,7 @@ class WatchlistServices {
       final response = await http.get(
         Uri.parse('${ApiConstants.baseUrl}${ApiConstants.watchlistCheck}/$movieId'),
         headers: {
-          'accept': 'application/json',
+          'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
       );

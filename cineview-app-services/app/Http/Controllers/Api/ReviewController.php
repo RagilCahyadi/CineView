@@ -1,11 +1,11 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Review;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ReviewController extends Controller
 {
@@ -45,7 +45,7 @@ class ReviewController extends Controller
             'rating' => ['required', 'integer', 'min:1', 'max:10'],
             'context' => ['required', 'string', 'max:100'],
             'content' => ['required', 'string'],
-            'photo_path' => ['nullable', 'string']
+            'photo_path' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048']
         ],);
 
         $user = Auth::user();
@@ -61,14 +61,19 @@ class ReviewController extends Controller
             ], 409);
         }
 
+        $photoPath = null;
+        if ($request->hasFile('photo_path')){
+            $photoPath = $request->file('photo_path')->store('reviews', 'public');
+        }
+
         $review = Review::create([
             'user_id' => $user->id,
-            'movie_id' => $request->movie_id,
-            'movie_title' => $request->movie_title,
-            'rating' => $request->rating,
-            'context' => $request->context,
-            'content' => $request->content,
-            'photo_path' => $request->photo_path
+            'movie_id' => $request->input('movie_id'),
+            'movie_title' => $request->input('movie_title'),
+            'rating' => $request->input('rating'),
+            'context' => $request->input('context'),
+            'content' => $request->input('content'),
+            'photo_path' => $photoPath
         ]);
 
         return response()->json([
@@ -111,7 +116,7 @@ class ReviewController extends Controller
             'rating' => ['sometimes', 'integer', 'min:1', 'max:10'],
             'context' => ['sometimes', 'string', 'max:100'],
             'content' => ['sometimes', 'string'],
-            'photo_path' => ['nullable', 'string']
+            'photo_path' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048']
         ]);
 
         $user = Auth::user();
@@ -125,8 +130,15 @@ class ReviewController extends Controller
                 'message' => 'Review not found'
             ], 404);
         }
+        
+        if ($request->hasFile('photo_path')){
+            if ($review->photo_path && Storage::disk('public')->exists($review->photo_path)){
+                Storage::disk('public')->delete($review->photo_path);
+            }
+            $review->photo_path = $request->file('photo_path')->store('reviews', 'public');
+        }
 
-        $review->update($request->only(['rating', 'context', 'content', 'photo_path']));
+        $review->save();
 
         return response()->json([
             'success' => true,
