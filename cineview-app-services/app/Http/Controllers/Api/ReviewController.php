@@ -45,7 +45,7 @@ class ReviewController extends Controller
             'rating' => ['required', 'integer', 'min:1', 'max:10'],
             'context' => ['required', 'string', 'max:100'],
             'content' => ['required', 'string'],
-            'photo_path' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048']
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048']
         ],);
 
         $user = Auth::user();
@@ -62,8 +62,8 @@ class ReviewController extends Controller
         }
 
         $photoPath = null;
-        if ($request->hasFile('photo_path')){
-            $photoPath = $request->file('photo_path')->store('reviews', 'public');
+        if ($request->hasFile('photo')){
+            $photoPath = $request->file('photo')->store('reviews', 'public');
         }
 
         $review = Review::create([
@@ -116,7 +116,7 @@ class ReviewController extends Controller
             'rating' => ['sometimes', 'integer', 'min:1', 'max:10'],
             'context' => ['sometimes', 'string', 'max:100'],
             'content' => ['sometimes', 'string'],
-            'photo_path' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048']
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg', 'max:2048']
         ]);
 
         $user = Auth::user();
@@ -131,13 +131,17 @@ class ReviewController extends Controller
             ], 404);
         }
         
-        if ($request->hasFile('photo_path')){
+        if ($request->hasFile('photo')){
             if ($review->photo_path && Storage::disk('public')->exists($review->photo_path)){
                 Storage::disk('public')->delete($review->photo_path);
             }
-            $review->photo_path = $request->file('photo_path')->store('reviews', 'public');
+            $review->photo_path = $request->file('photo')->store('reviews', 'public');
         }
 
+        if ($request->has('rating')) $review->rating = $request->rating;
+        if ($request->has('context')) $review->context = $request->context;
+        if ($request->has('content')) $review->content = $request->content;
+        
         $review->save();
 
         return response()->json([
