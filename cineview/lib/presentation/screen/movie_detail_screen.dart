@@ -1,12 +1,159 @@
+import 'dart:developer';
+
+import 'package:cineview/data/services/review_services.dart';
 import 'package:cineview/presentation/widgets/review_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/dummy_data_film.dart';
 
-class MovieDetailScreen extends StatelessWidget {
+class MovieDetailScreen extends StatefulWidget {
   final DummyDataFilm film;
 
   const MovieDetailScreen({super.key, required this.film});
+
+  @override
+  State<MovieDetailScreen> createState() => _MovieDetailScreenState();
+}
+
+class _MovieDetailScreenState extends State<MovieDetailScreen> {
+  bool _hasReviewed = false;
+  bool _isCheckingReview = true;
+  int? _existingReviewId;
+  
+  // Reviews data
+  List<dynamic> _movieReviews = [];
+  bool _isLoadingReviews = true;
+  double _averageRating = 0.0;
+  int _totalReviews = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIfUserReviewed();
+    _loadMovieReviews();
+  }
+
+  Future<void> _checkIfUserReviewed() async {
+    try {
+      final reviewService = ReviewServices();
+      
+      // Get user's reviews
+      final result = await reviewService.getMyReviews();
+      
+      if (result['success'] == true) {
+        final reviews = result['data'] as List;
+        
+        // Check if user already reviewed this movie
+        final existingReview = reviews.firstWhere(
+          (review) => review['movie_id'] == widget.film.id,
+          orElse: () => null,
+        );
+        
+        setState(() {
+          _hasReviewed = existingReview != null;
+          _existingReviewId = existingReview?['id'];
+          _isCheckingReview = false;
+        });
+      } else {
+        setState(() {
+          _isCheckingReview = false;
+        });
+      }
+    } catch (e) {
+      log('Error checking review: $e');
+      setState(() {
+        _isCheckingReview = false;
+      });
+    }
+  }
+
+  Future<void> _loadMovieReviews() async {
+    try {
+      final reviewService = ReviewServices();
+      
+      // Get all reviews for this movie
+      final result = await reviewService.getReviewsByMovie(widget.film.id);
+      
+      if (result['success'] == true) {
+        setState(() {
+          _movieReviews = result['data'] as List;
+          _averageRating = (result['averageRating'] ?? 0.0).toDouble();
+          _totalReviews = result['totalReviews'] ?? 0;
+          _isLoadingReviews = false;
+        });
+      } else {
+        setState(() {
+          _isLoadingReviews = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading reviews: $e');
+      setState(() {
+        _isLoadingReviews = false;
+      });
+    }
+  }
+
+  void _showTopNotification(
+    BuildContext context,
+    String message,
+    Color backgroundColor,
+  ) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 10,  // ← Top position
+        left: 16,
+        right: 16,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: backgroundColor,  // ← Green for success, Red for error
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  backgroundColor == Colors.green
+                      ? Icons.check_circle
+                      : Icons.error,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+    Future.delayed(const Duration(seconds: 3), () {
+      overlayEntry.remove();  // ← Auto dismiss
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,7 +172,6 @@ class MovieDetailScreen extends StatelessWidget {
           ],
         ),
       ),
-
       bottomNavigationBar: _buildBottomButtons(context),
     );
   }
@@ -38,7 +184,7 @@ class MovieDetailScreen extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             image: DecorationImage(
-              image: AssetImage(film.image),
+              image: AssetImage(widget.film.image),
               fit: BoxFit.cover,
             ),
           ),
@@ -102,12 +248,12 @@ class MovieDetailScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            film.releaseDate,
+            widget.film.releaseDate,
             style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
           ),
           const SizedBox(height: 8),
           Text(
-            film.title,
+            widget.film.title,
             style: const TextStyle(
               color: AppTheme.textPrimary,
               fontSize: 28,
@@ -119,10 +265,10 @@ class MovieDetailScreen extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildInfoChip('${film.duration} menit'),
+              _buildInfoChip('${widget.film.duration} menit'),
               _buildInfoChip('Movie'),
-              _buildInfoChip(film.genre.first),
-              _buildInfoChip(film.ageRating),
+              _buildInfoChip(widget.film.genre.first),
+              _buildInfoChip(widget.film.ageRating),
             ],
           ),
         ],
@@ -150,21 +296,58 @@ class MovieDetailScreen extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       child: Row(
         children: [
-          const Icon(Icons.star, color: AppTheme.starColor, size: 24),
-          const SizedBox(width: 8),
-          Text(
-            '${film.rating}/10',
-            style: const TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          // Show user reviews rating if available
+          if (_totalReviews > 0) ...[
+            const Icon(Icons.star, color: AppTheme.starColor, size: 24),
+            const SizedBox(width: 8),
+            Text(
+              '${_averageRating.toStringAsFixed(1)}/10',
+              style: const TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '(${film.voteCount} votes)',
-            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-          ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppTheme.secondaryColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppTheme.secondaryColor),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.people, color: AppTheme.textPrimary, size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$_totalReviews ${_totalReviews == 1 ? 'review' : 'reviews'}',
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else
+            // Show placeholder when no reviews yet
+            Row(
+              children: [
+                const Icon(Icons.star_border, color: Colors.grey, size: 24),
+                const SizedBox(width: 8),
+                Text(
+                  'No ratings yet',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -201,9 +384,9 @@ class MovieDetailScreen extends StatelessWidget {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: film.cast.length,
+            itemCount: widget.film.cast.length,
             itemBuilder: (context, index) {
-              final actor = film.cast[index];
+              final actor = widget.film.cast[index];
               return _buildCastItem(actor);
             },
           ),
@@ -248,7 +431,7 @@ class MovieDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            film.synopsis,
+            widget.film.synopsis,
             style: const TextStyle(
               color: AppTheme.textSecondary,
               fontSize: 14,
@@ -270,11 +453,11 @@ class MovieDetailScreen extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: OutlinedButton(
+            child: OutlinedButton.icon(
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('${film.title} added to watchlist'),
+                    content: Text('${widget.film.title} added to watchlist'),
                     backgroundColor: Colors.green,
                     duration: const Duration(seconds: 2),
                     action: SnackBarAction(
@@ -285,45 +468,71 @@ class MovieDetailScreen extends StatelessWidget {
                   ),
                 );
               },
+              icon: const Icon(
+                Icons.bookmark_add_outlined
+              ),
+              label: const Text('Add to watchlist'),
               style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.textPrimary,
+                backgroundColor: AppTheme.surfaceColor,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                side: const BorderSide(color: AppTheme.dividerColor),
+                side: const BorderSide(color: AppTheme.dividerColor, width: 1.5),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(25),
                 ),
-              ),
-              child: const Text(
-                'Add to watchlist',
-                style: TextStyle(color: AppTheme.textPrimary),
               ),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton(
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => ReviewModal(
-                    movieTitle: film.title,
-                    movieID: film.id,
-                    posterPath: film.image,
-                  ),
-                );
-              },
+              onPressed: _isCheckingReview
+                  ? null
+                  : () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (modalContext) => Padding(
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(modalContext).viewInsets.bottom,
+                          ),
+                          child: ReviewModal(
+                            movieTitle: widget.film.title,
+                            movieID: widget.film.id,
+                            posterPath: widget.film.image,
+                            isUpdate: _hasReviewed,
+                            existingReviewId: _existingReviewId,
+                            onReviewSubmitted: (message) {
+                              _showTopNotification(context, message, Colors.green);
+                              _checkIfUserReviewed();
+                              _loadMovieReviews();
+                            },
+                          ),
+                        ),
+                      );
+                    },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
+                backgroundColor: AppTheme.secondaryColor,
+                foregroundColor: AppTheme.textPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(25),
                 ),
               ),
-              child: const Text(
-                'Give a review',
-                style: TextStyle(color: AppTheme.textPrimary),
-              ),
+              child: _isCheckingReview
+                  ? const SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text(
+                      _hasReviewed ? 'Update review' : 'Give a review',
+                      style: const TextStyle(color: AppTheme.textPrimary),
+                    ),
             ),
           ),
         ],
@@ -332,33 +541,6 @@ class MovieDetailScreen extends StatelessWidget {
   }
 
   Widget _buildReviewsSection() {
-    final List<Map<String, String>> reviews = [
-      {
-        'username': 'CCrusader',
-        'date': 'April 20, 2025',
-        'title': 'Great Movie!',
-        'rating': '8',
-        'content':
-            'Minecraft movie is enchanted and more. It\'s like a box of Legos...',
-      },
-      {
-        'username': 'alex_gamer',
-        'date': 'April 20, 2025',
-        'title': 'Entertaining, but that\'s it',
-        'rating': '7',
-        'content':
-            'As a longtime Minecraft player for this movie-and while it didn\'t disappoint either.',
-      },
-      {
-        'username': 'movie_fan',
-        'date': 'April 18, 2025',
-        'title': 'Fun for the whole family',
-        'rating': '9',
-        'content':
-            'Took my kids to see this and they absolutely loved it! Great adaptation.',
-      },
-    ];
-
     return Column(
       children: [
         Padding(
@@ -366,45 +548,132 @@ class MovieDetailScreen extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Reviews',
-                style: TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  const Text(
+                    'Reviews',
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (_totalReviews > 0) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.secondaryColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '$_totalReviews',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              TextButton(
-                onPressed: () {},
-                child: const Text(
-                  'See all',
-                  style: TextStyle(color: AppTheme.textSecondary),
+              if (_movieReviews.length > 3)
+                TextButton(
+                  onPressed: () {
+                    // TODO: Navigate to all reviews page
+                  },
+                  child: const Text(
+                    'See all',
+                    style: TextStyle(color: AppTheme.textSecondary),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
-        SizedBox(
-          height: 160,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: reviews.length,
-            itemBuilder: (context, index) {
-              final review = reviews[index];
-              return _buildReviewCard(review);
-            },
-          ),
-        ),
+        const SizedBox(height: 12),
+        _isLoadingReviews
+            ? const SizedBox(
+                height: 160,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              )
+            : _movieReviews.isEmpty
+                ? SizedBox(
+                    height: 160,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.rate_review_outlined,
+                            size: 48,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No reviews yet',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Be the first to review this movie!',
+                            style: TextStyle(
+                              color: Colors.grey[700],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : SizedBox(
+                    height: 180,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: _movieReviews.length > 5 ? 5 : _movieReviews.length,
+                      itemBuilder: (context, index) {
+                        final review = _movieReviews[index];
+                        return _buildReviewCard(review);
+                      },
+                    ),
+                  ),
       ],
     );
   }
 
-  Widget _buildReviewCard(Map<String, String> review) {
+  Widget _buildReviewCard(dynamic review) {
+    final userName = review['user']?['name'] ?? 'Anonymous';
+    final rating = review['rating'] ?? 0;
+    final content = review['content'] ?? '';
+    final context = review['context'] ?? '';
+    final createdAt = review['created_at'] ?? '';
+    
+    // Format date
+    String formattedDate = 'Recently';
+    if (createdAt.isNotEmpty) {
+      try {
+        final date = DateTime.parse(createdAt);
+        formattedDate = '${date.day}/${date.month}/${date.year}';
+      } catch (e) {
+        formattedDate = 'Recently';
+      }
+    }
+
     return Container(
-      width: 200,
+      width: 220,
       margin: const EdgeInsets.symmetric(horizontal: 6),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(12),
@@ -413,29 +682,77 @@ class MovieDetailScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header: User info and date
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
                   Container(
-                    width: 24,
-                    height: 24,
+                    width: 28,
+                    height: 28,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(4),
+                      color: AppTheme.secondaryColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Icon(
                       Icons.person,
-                      size: 16,
-                      color: AppTheme.primaryColor,
+                      size: 18,
+                      color: AppTheme.secondaryColor,
                     ),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
+                  Text(
+                    userName,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          
+          // Context chip
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppTheme.primaryColor.withOpacity(0.3),
+              ),
+            ),
+            child: Text(
+              context,
+              style: const TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          
+          // Rating
+          Row(
+            children: [
+              const Icon(Icons.star, color: AppTheme.starColor, size: 18),
+              const SizedBox(width: 4),
               Text(
-                review['date'] ?? '',
+                '$rating/10',
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                formattedDate,
                 style: const TextStyle(
                   color: AppTheme.textSecondary,
                   fontSize: 10,
@@ -443,42 +760,18 @@ class MovieDetailScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            review['title'] ?? '',
-            style: const TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const Icon(Icons.star, color: AppTheme.starColor, size: 16),
-              const SizedBox(width: 4),
-              Text(
-                '${review['rating']}/10',
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
+          
+          // Review content
           Expanded(
             child: Text(
-              '${review['content']} (${review['username']})',
+              content,
               style: const TextStyle(
                 color: AppTheme.textSecondary,
-                fontSize: 11,
+                fontSize: 12,
                 height: 1.4,
               ),
-              maxLines: 3,
+              maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
           ),
