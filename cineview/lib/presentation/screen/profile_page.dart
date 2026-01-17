@@ -1,6 +1,7 @@
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/dummy_data_film.dart';
 import 'package:cineview/data/services/auth_service.dart';
+import 'package:cineview/presentation/screen/edit_profile_page.dart';
 import 'package:cineview/presentation/screen/login_page.dart';
 import 'package:flutter/material.dart';
 
@@ -30,6 +31,7 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildProfileHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -85,7 +87,12 @@ class ProfilePage extends StatelessWidget {
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: GestureDetector(
-                    onTap: () => _showLogoutDialog(context),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EditProfilePage(),
+                      ),
+                    ),
                     child: Icon(
                       Icons.settings_outlined,
                       color: Colors.grey[400],
@@ -100,6 +107,7 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildStatsSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -124,6 +132,7 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildStatItem(IconData icon, String label, String value) {
     return Column(
       children: [
@@ -142,6 +151,7 @@ class ProfilePage extends StatelessWidget {
       ],
     );
   }
+
   Widget _buildRecentlyViewedSection() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -208,6 +218,7 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildRatingsSection() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -274,6 +285,7 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
+
   Widget _buildMovieCard(DummyDataFilm film) {
     return Container(
       width: 100,
@@ -357,6 +369,7 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
+
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
