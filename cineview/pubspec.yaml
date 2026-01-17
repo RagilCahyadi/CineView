@@ -1,7 +1,7 @@
 name: cineview
 description: "A new Flutter project."
 
-publish_to: 'none' 
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -23,6 +23,8 @@ dependencies:
   image_picker: ^1.2.1
   get: ^4.7.3
   shimmer: ^3.0.0
+  tmdb_api: ^2.2.3
+  flutter_dotenv: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -30,11 +32,8 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
 
-
 flutter:
   uses-material-design: true
   assets:
     - assets/images/
-  
-
- 
+    - .env
