@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cineview/core/theme/app_theme.dart';
+import 'package:cineview/data/services/auth_service.dart';
+import 'package:cineview/presentation/screen/login_page.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
