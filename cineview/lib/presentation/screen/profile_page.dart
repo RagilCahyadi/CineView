@@ -1,7 +1,7 @@
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/dummy_data_film.dart';
 import 'package:cineview/data/services/auth_service.dart';
-import 'package:cineview/presentation/screen/edit_profile_page.dart';
+import 'package:cineview/presentation/screen/settings_page.dart';
 import 'package:cineview/presentation/screen/login_page.dart';
 import 'package:flutter/material.dart';
 
@@ -90,7 +90,7 @@ class ProfilePage extends StatelessWidget {
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const EditProfilePage(),
+                        builder: (context) => const SettingsPage(),
                       ),
                     ),
                     child: Icon(
@@ -364,41 +364,6 @@ class ProfilePage extends StatelessWidget {
           Text(
             film.year,
             style: TextStyle(color: Colors.grey[500], fontSize: 10),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.surfaceColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Logout', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'Are you sure you want to logout?',
-          style: TextStyle(color: Colors.grey),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final authService = AuthService();
-              await authService.logout();
-              if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                  (route) => false,
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Logout', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
