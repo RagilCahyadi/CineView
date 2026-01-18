@@ -74,7 +74,7 @@ class TrailerPlayerScreen extends StatelessWidget {
                     child: Icon(
                       Icons.play_circle_fill,
                       size: 80,
-                      color: Colors.red,
+                      color: AppTheme.primaryColor,
                     ),
                   ),
                 ),
@@ -98,7 +98,7 @@ class TrailerPlayerScreen extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: _playTrailer,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: AppTheme.primaryColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,

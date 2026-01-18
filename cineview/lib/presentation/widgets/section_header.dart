@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 
 class SectionHeader extends StatelessWidget {
-  const SectionHeader({
-    super.key,
-    required this.title,
-    this.onSeeAllTap,
-  });
+  const SectionHeader({super.key, required this.title, this.onSeeAllTap});
 
   final String title;
   final VoidCallback? onSeeAllTap;
@@ -26,26 +22,24 @@ class SectionHeader extends StatelessWidget {
               color: AppTheme.textPrimary,
             ),
           ),
-          GestureDetector(
-            onTap: onSeeAllTap,
-            child: const Row(
-              children: [
-                Text(
-                  "See all",
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 14,
+          if (onSeeAllTap != null)
+            GestureDetector(
+              onTap: onSeeAllTap,
+              child: const Row(
+                children: [
+                  Text(
+                    "See all",
+                    style: TextStyle(color: AppTheme.textPrimary, fontSize: 14),
                   ),
-                ),
-                SizedBox(width: 6),
-                Icon(
-                  Icons.play_circle_filled,
-                  color: AppTheme.primaryColor,
-                  size: 20,
-                ),
-              ],
+                  SizedBox(width: 6),
+                  Icon(
+                    Icons.play_circle_filled,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
