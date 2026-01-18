@@ -1,13 +1,23 @@
-import 'package:cineview/presentation/screen/popular_page.dart';
-import 'package:cineview/presentation/widgets/movie_card.dart';
-import 'package:cineview/presentation/widgets/section_header.dart';
 import 'package:flutter/material.dart';
-import 'package:cineview/data/models/dummy_data_film.dart';
+import 'package:cineview/core/theme/app_theme.dart';
+import 'package:cineview/data/models/movie_model.dart';
+import 'package:cineview/presentation/screen/popular_page.dart';
+import 'package:cineview/presentation/widgets/section_header.dart';
+import 'package:cineview/presentation/widgets/tmdb_movie_card.dart';
 
 class FilmPopulerSection extends StatelessWidget {
-  const FilmPopulerSection({super.key, required this.film});
+  final List<MovieModel> movies;
 
-  final List<DummyDataFilm> film;
+  final bool isLoading;
+
+  final Function(MovieModel)? onMovieTap;
+
+  const FilmPopulerSection({
+    super.key,
+    required this.movies,
+    this.isLoading = false,
+    this.onMovieTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,20 +33,56 @@ class FilmPopulerSection extends StatelessWidget {
             );
           },
         ),
+
         const SizedBox(height: 16),
 
-        SizedBox(
-          height: 180,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            itemCount: film.length,
-            itemBuilder: (context, index) {
-              return MovieCard(film: film[index]);
-            },
+        isLoading ? _buildLoadingState() : _buildMovieList(),
+      ],
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return const SizedBox(
+      height: 180,
+      child: Center(
+        child: CircularProgressIndicator(color: AppTheme.primaryColor),
+      ),
+    );
+  }
+
+  Widget _buildMovieList() {
+    if (movies.isEmpty) {
+      return const SizedBox(
+        height: 180,
+        child: Center(
+          child: Text(
+            'Tidak ada film',
+            style: TextStyle(color: AppTheme.textSecondary),
           ),
         ),
-      ],
+      );
+    }
+
+    return SizedBox(
+      height: 200,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        itemCount: movies.length,
+        itemBuilder: (BuildContext context, int index) {
+          // Ambil data film pada index ini
+          MovieModel movie = movies[index];
+
+          return TmdbMovieCard(
+            movie: movie,
+            onTap: () {
+              if (onMovieTap != null) {
+                onMovieTap!(movie);
+              }
+            },
+          );
+        },
+      ),
     );
   }
 }

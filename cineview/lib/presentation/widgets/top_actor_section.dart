@@ -1,11 +1,23 @@
+import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
+import 'package:cineview/data/models/actor_model.dart';
 import 'package:cineview/presentation/screen/popular_page.dart';
 import 'package:cineview/presentation/widgets/section_header.dart';
-import 'package:flutter/material.dart';
-import 'package:cineview/data/models/dummy_data_actor.dart';
+import 'package:cineview/presentation/widgets/actor_card.dart';
 
 class TopActorSection extends StatelessWidget {
-  const TopActorSection({super.key});
+  final List<ActorModel> actors;
+
+  final bool isLoading;
+
+  final Function(ActorModel)? onActorTap;
+
+  const TopActorSection({
+    super.key,
+    required this.actors,
+    this.isLoading = false,
+    this.onActorTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,51 +33,55 @@ class TopActorSection extends StatelessWidget {
             );
           },
         ),
+
         const SizedBox(height: 16),
-        SizedBox(
-          height: 120,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            itemCount: actors.length,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 20),
-                child: _buildActorItem(actors[index]),
-              );
-            },
-          ),
-        ),
+
+        isLoading ? _buildLoadingState() : _buildActorList(),
       ],
     );
   }
 
-  Widget _buildActorItem(DummyDataActor actor) {
-    return Column(
-      children: [
-        Container(
-          width: 70,
-          height: 70,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppTheme.surfaceColor,
-            border: Border.all(color: AppTheme.dividerColor, width: 2),
-            image: DecorationImage(
-              image: AssetImage(actor.image),
-              fit: BoxFit.cover,
-            ),
+  Widget _buildLoadingState() {
+    return const SizedBox(
+      height: 120,
+      child: Center(
+        child: CircularProgressIndicator(color: AppTheme.primaryColor),
+      ),
+    );
+  }
+
+  Widget _buildActorList() {
+    if (actors.isEmpty) {
+      return const SizedBox(
+        height: 120,
+        child: Center(
+          child: Text(
+            'Tidak ada aktor',
+            style: TextStyle(color: AppTheme.textSecondary),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          actor.firstName,
-          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 12),
-        ),
-        Text(
-          actor.lastName,
-          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 11),
-        ),
-      ],
+      );
+    }
+
+    return SizedBox(
+      height: 130,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        itemCount: actors.length,
+        itemBuilder: (BuildContext context, int index) {
+          ActorModel actor = actors[index];
+
+          return ActorCard(
+            actor: actor,
+            onTap: () {
+              if (onActorTap != null) {
+                onActorTap!(actor);
+              }
+            },
+          );
+        },
+      ),
     );
   }
 }
