@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:cineview/data/services/review_services.dart';
+import 'package:cineview/presentation/screen/all_reviews_page.dart';
 import 'package:cineview/presentation/screen/trailer_player_screen.dart';
 import 'package:cineview/presentation/widgets/review_modal.dart';
 import 'package:flutter/material.dart';
@@ -588,13 +589,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              TextButton(
-                onPressed: () {},
-                child: const Text(
-                  'See all',
-                  style: TextStyle(color: AppTheme.textSecondary),
-                ),
-              ),
             ],
           ),
         ),
@@ -848,10 +842,18 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   ],
                 ],
               ),
-              if (_movieReviews.length > 3)
+              if (_movieReviews.isNotEmpty)
                 TextButton(
                   onPressed: () {
-                    // TODO: Navigate to all reviews page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AllReviewsPage(
+                          movieTitle: widget.movie.title,
+                          movieId: widget.movie.id,
+                        ),
+                      ),
+                    );
                   },
                   child: const Text(
                     'See all',
@@ -919,8 +921,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     final userName = review['user']?['name'] ?? 'Anonymous';
     final rating = review['rating'] ?? 0;
     final content = review['content'] ?? '';
-    final context = review['context'] ?? '';
+    final reviewContext = review['context'] ?? '';
     final createdAt = review['created_at'] ?? '';
+    final photoPath = review['photo_path'];
 
     // Format date
     String formattedDate = 'Recently';
@@ -934,7 +937,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     }
 
     return Container(
-      width: 220,
+      width: photoPath != null ? 280 : 220,
       margin: const EdgeInsets.symmetric(horizontal: 6),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -942,98 +945,132 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppTheme.dividerColor.withOpacity(0.5)),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: User info and date
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: AppTheme.secondaryColor.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
+          // Review photo (if available)
+          if (photoPath != null && photoPath.toString().isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(right: 12),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  // Use full URL with storage path
+                  'http://10.0.2.2:8000/storage/$photoPath',
+                  width: 60,
+                  height: 80,
+                  fit: BoxFit.cover,
+                  errorBuilder: (c, e, s) => Container(
+                    width: 60,
+                    height: 80,
+                    color: AppTheme.dividerColor,
                     child: const Icon(
-                      Icons.person,
-                      size: 18,
-                      color: AppTheme.secondaryColor,
+                      Icons.image,
+                      color: AppTheme.textSecondary,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    userName,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // Context chip
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
-            ),
-            child: Text(
-              context,
-              style: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Rating
-          Row(
-            children: [
-              const Icon(Icons.star, color: AppTheme.starColor, size: 18),
-              const SizedBox(width: 4),
-              Text(
-                '$rating/10',
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const Spacer(),
-              Text(
-                formattedDate,
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 10,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
+            ),
           // Review content
           Expanded(
-            child: Text(
-              content,
-              style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 12,
-                height: 1.4,
-              ),
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header: User info
+                Row(
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: AppTheme.secondaryColor.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        Icons.person,
+                        size: 16,
+                        color: AppTheme.secondaryColor,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        userName,
+                        style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+
+                // Context chip
+                if (reviewContext.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      reviewContext,
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 6),
+
+                // Rating and date
+                Row(
+                  children: [
+                    const Icon(Icons.star, color: AppTheme.starColor, size: 14),
+                    const SizedBox(width: 2),
+                    Text(
+                      '$rating/10',
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      formattedDate,
+                      style: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+
+                // Review content
+                Expanded(
+                  child: Text(
+                    content,
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 11,
+                      height: 1.3,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
