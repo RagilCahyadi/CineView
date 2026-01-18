@@ -195,6 +195,9 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 10),
 
             const HotTrailerSection(),
+
+            const SizedBox(height: 10),
+
             TopActorSection(
               actors: _trendingActors,
               isLoading: _isLoadingActors,

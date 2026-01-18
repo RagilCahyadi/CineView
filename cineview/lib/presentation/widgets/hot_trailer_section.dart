@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/services/tmdb_service.dart';
-import 'package:cineview/presentation/screen/popular_page.dart';
 import 'package:cineview/presentation/screen/trailer_player_screen.dart';
 import 'package:cineview/presentation/widgets/section_header.dart';
 
@@ -42,15 +41,7 @@ class _HotTrailerSectionState extends State<HotTrailerSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(
-          title: "Hot Trailer",
-          onSeeAllTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const PopularPage()),
-            );
-          },
-        ),
+        const SectionHeader(title: "Hot Trailer"),
         const SizedBox(height: 12),
         _isLoading ? _buildLoadingState() : _buildTrailerList(),
       ],

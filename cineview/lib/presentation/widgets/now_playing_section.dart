@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/movie_model.dart';
 import 'package:cineview/data/services/tmdb_service.dart';
-import 'package:cineview/presentation/screen/popular_page.dart';
+import 'package:cineview/presentation/screen/see_all_page.dart';
 import 'package:cineview/presentation/widgets/section_header.dart';
 
 class NowPlayingSection extends StatelessWidget {
@@ -27,7 +27,14 @@ class NowPlayingSection extends StatelessWidget {
           onSeeAllTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const PopularPage()),
+              MaterialPageRoute(
+                builder: (context) => SeeAllPage(
+                  title: 'Now Playing',
+                  type: SeeAllType.movie,
+                  movies: movies,
+                  onMovieTap: onMovieTap,
+                ),
+              ),
             );
           },
         ),
@@ -64,7 +71,7 @@ class NowPlayingSection extends StatelessWidget {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        itemCount: movies.length,
+        itemCount: movies.length > 5 ? 5 : movies.length,
         itemBuilder: (context, index) {
           MovieModel movie = movies[index];
           return _buildNowPlayingCard(context, movie);
