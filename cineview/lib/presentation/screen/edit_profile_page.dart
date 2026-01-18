@@ -48,6 +48,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       });
     }
   }
+
   void _showImagePickerOptions() {
     showModalBottomSheet(
       context: context,
@@ -391,6 +392,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ),
     );
   }
+
   void _handleSaveChanges() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Profile updated successfully!')),
