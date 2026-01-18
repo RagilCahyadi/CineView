@@ -48,6 +48,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       });
     }
   }
+
   void _showImagePickerOptions() {
     showModalBottomSheet(
       context: context,
