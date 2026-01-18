@@ -2,6 +2,7 @@ import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/presentation/screen/profile_page.dart';
 import 'package:cineview/presentation/screen/watchlist_page.dart';
 import 'package:cineview/presentation/screen/home_page.dart';
+import 'package:cineview/presentation/screen/explore_page.dart';
 import 'package:flutter/material.dart';
 
 class MainNavigation extends StatefulWidget {
@@ -17,7 +18,7 @@ class _MainNavigationState extends State<MainNavigation> {
   final List<Widget> _pages = [
     const HomePage(),
     const WatchlistPage(),
-    const _PlaceholderPage(title: 'Explore'),
+    const ExplorePage(),
     const ProfilePage(),
   ];
 
