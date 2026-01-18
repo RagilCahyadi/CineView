@@ -3,6 +3,8 @@ import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/services/auth_service.dart';
 import 'package:cineview/presentation/screen/login_page.dart';
 import 'package:cineview/presentation/screen/edit_profile_page.dart';
+import 'package:cineview/presentation/screen/change_password_page.dart';
+import 'package:cineview/presentation/screen/faq_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -221,8 +223,11 @@ class _SettingsPageState extends State<SettingsPage> {
 
                             InkWell(
                               onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Coming Soon')),
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ChangePasswordPage(),
+                                  ),
                                 );
                               },
                               child: Padding(
@@ -369,7 +374,14 @@ class _SettingsPageState extends State<SettingsPage> {
                         child: Column(
                           children: [
                             InkWell(
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => FaqPage(),
+                                  ),
+                                );
+                              },
                               child: Padding(
                                 padding: EdgeInsets.all(16),
                                 child: Row(
