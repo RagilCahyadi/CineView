@@ -1,16 +1,19 @@
 import 'dart:developer';
 
 import 'package:cineview/data/services/review_services.dart';
+import 'package:cineview/presentation/screen/all_reviews_page.dart';
+import 'package:cineview/presentation/screen/trailer_player_screen.dart';
 import 'package:cineview/presentation/widgets/review_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
-import 'package:cineview/data/models/dummy_data_film.dart';
+import 'package:cineview/data/models/movie_model.dart';
+import 'package:cineview/data/services/tmdb_service.dart';
 import 'package:cineview/data/services/watchlist_services.dart';
 
 class MovieDetailScreen extends StatefulWidget {
-  final DummyDataFilm film;
+  final MovieModel movie;
 
-  const MovieDetailScreen({super.key, required this.film});
+  const MovieDetailScreen({super.key, required this.movie});
 
   @override
   State<MovieDetailScreen> createState() => _MovieDetailScreenState();
@@ -30,6 +33,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   bool _isCheckingWatchlist = true;
   bool _isWatchlistLoading = false;
   int? _watchlistItemId;
+  Map<String, dynamic>? _movieDetails;
+  List<dynamic> _cast = [];
+  bool _isLoadingDetails = true;
+  String? _trailerVideoId;
 
   @override
   void initState() {
@@ -37,13 +44,75 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     _checkIfUserReviewed();
     _loadMovieReviews();
     _checkWatchlistStatus();
+    _loadMovieDetails();
+  }
+
+  Future<void> _loadMovieDetails() async {
+    try {
+      final tmdbService = TmdbService();
+
+      final details = await tmdbService.getMovieWithDetails(widget.movie.id);
+      final credits = await tmdbService.getMovieCredits(widget.movie.id);
+      final videos = await tmdbService.getMovieVideos(widget.movie.id);
+
+      log('Videos response: $videos');
+
+      // Find trailer video ID
+      String? videoId;
+      final videoList = videos['results'] as List? ?? [];
+
+      log('Video list count: ${videoList.length}');
+
+      // First try to find Trailer
+      for (var v in videoList) {
+        log('Video: type=${v['type']}, site=${v['site']}, key=${v['key']}');
+        if (v['type'] == 'Trailer' && v['site'] == 'YouTube') {
+          videoId = v['key'];
+          break;
+        }
+      }
+
+      // If no Trailer, try Teaser
+      if (videoId == null) {
+        for (var v in videoList) {
+          if (v['type'] == 'Teaser' && v['site'] == 'YouTube') {
+            videoId = v['key'];
+            break;
+          }
+        }
+      }
+
+      // If still no video, take any YouTube video
+      if (videoId == null && videoList.isNotEmpty) {
+        for (var v in videoList) {
+          if (v['site'] == 'YouTube') {
+            videoId = v['key'];
+            break;
+          }
+        }
+      }
+
+      log('Final trailer videoId: $videoId');
+
+      setState(() {
+        _movieDetails = details;
+        _cast = (credits['cast'] as List? ?? []).take(10).toList();
+        _trailerVideoId = videoId;
+        _isLoadingDetails = false;
+      });
+    } catch (e) {
+      log('Error loading movie details: $e');
+      setState(() {
+        _isLoadingDetails = false;
+      });
+    }
   }
 
   Future<void> _checkWatchlistStatus() async {
     try {
       final watchlistService = WatchlistServices();
       final result = await watchlistService.checkMovieInWatchlist(
-        widget.film.id,
+        widget.movie.id,
       );
 
       if (result['success'] == true) {
@@ -59,7 +128,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         if (listResult['success'] == true) {
           final items = listResult['data'] as List;
           final item = items.firstWhere(
-            (i) => i['movie_id'] == widget.film.id,
+            (i) => i['movie_id'] == widget.movie.id,
             orElse: () => null,
           );
           if (item != null) {
@@ -101,7 +170,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           });
           _showTopNotification(
             context,
-            '${widget.film.title} removed from watchlist',
+            '${widget.movie.title} removed from watchlist',
             Colors.orange,
           );
         } else {
@@ -114,9 +183,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       } else {
         // ADD to watchlist
         final result = await watchlistService.addMovieToWatchlist(
-          movieId: widget.film.id,
-          movieTitle: widget.film.title,
-          posterPath: widget.film.image,
+          movieId: widget.movie.id,
+          movieTitle: widget.movie.title,
+          posterPath: widget.movie.posterPath ?? '',
         );
         if (result['success'] == true) {
           setState(() {
@@ -125,7 +194,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           });
           _showTopNotification(
             context,
-            '${widget.film.title} added to watchlist',
+            '${widget.movie.title} added to watchlist',
             Colors.green,
           );
         } else {
@@ -158,7 +227,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
         // Check if user already reviewed this movie
         final existingReview = reviews.firstWhere(
-          (review) => review['movie_id'] == widget.film.id,
+          (review) => review['movie_id'] == widget.movie.id,
           orElse: () => null,
         );
 
@@ -185,7 +254,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       final reviewService = ReviewServices();
 
       // Get all reviews for this movie
-      final result = await reviewService.getReviewsByMovie(widget.film.id);
+      final result = await reviewService.getReviewsByMovie(widget.movie.id);
 
       if (result['success'] == true) {
         setState(() {
@@ -296,10 +365,15 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           height: 500,
           width: double.infinity,
           decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage(widget.film.image),
-              fit: BoxFit.cover,
-            ),
+            color: AppTheme.surfaceColor,
+            image: widget.movie.posterPath != null
+                ? DecorationImage(
+                    image: NetworkImage(
+                      TmdbService.getPosterUrl(widget.movie.posterPath),
+                    ),
+                    fit: BoxFit.cover,
+                  )
+                : null,
           ),
           child: Container(
             decoration: BoxDecoration(
@@ -335,17 +409,39 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           left: 0,
           right: 0,
           child: Center(
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.play_arrow,
-                size: 40,
-                color: Colors.black,
+            child: GestureDetector(
+              onTap: () {
+                if (_trailerVideoId != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TrailerPlayerScreen(
+                        videoId: _trailerVideoId!,
+                        movieTitle: widget.movie.title,
+                      ),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Trailer tidak tersedia'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.play_arrow,
+                  size: 40,
+                  color: Colors.black,
+                ),
               ),
             ),
           ),
@@ -361,12 +457,12 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.film.releaseDate,
+            widget.movie.releaseDate ?? '',
             style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
           ),
           const SizedBox(height: 8),
           Text(
-            widget.film.title,
+            widget.movie.title,
             style: const TextStyle(
               color: AppTheme.textPrimary,
               fontSize: 28,
@@ -378,10 +474,17 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildInfoChip('${widget.film.duration} menit'),
+              if (_movieDetails?['runtime'] != null)
+                _buildInfoChip('${_movieDetails!['runtime']} menit'),
               _buildInfoChip('Movie'),
-              _buildInfoChip(widget.film.genre.first),
-              _buildInfoChip(widget.film.ageRating),
+              if (_movieDetails?['certification'] != null &&
+                  _movieDetails!['certification'].toString().isNotEmpty)
+                _buildInfoChip(_movieDetails!['certification']),
+              // Add genres
+              if (_movieDetails?['genres'] != null)
+                ...(_movieDetails!['genres'] as List)
+                    .take(2) // Limit to 2 genres to avoid overflow
+                    .map((genre) => _buildInfoChip(genre['name'] ?? '')),
             ],
           ),
         ],
@@ -486,33 +589,38 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              TextButton(
-                onPressed: () {},
-                child: const Text(
-                  'See all',
-                  style: TextStyle(color: AppTheme.textSecondary),
-                ),
-              ),
             ],
           ),
         ),
         SizedBox(
           height: 120,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: widget.film.cast.length,
-            itemBuilder: (context, index) {
-              final actor = widget.film.cast[index];
-              return _buildCastItem(actor);
-            },
-          ),
+          child: _cast.isEmpty
+              ? const Center(
+                  child: Text(
+                    'No cast information',
+                    style: TextStyle(color: AppTheme.textSecondary),
+                  ),
+                )
+              : ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _cast.length,
+                  itemBuilder: (context, index) {
+                    final actor = _cast[index];
+                    return _buildCastItem(actor);
+                  },
+                ),
         ),
       ],
     );
   }
 
-  Widget _buildCastItem(Map<String, String> actor) {
+  Widget _buildCastItem(dynamic actor) {
+    final profilePath = actor['profile_path'];
+    final imageUrl = profilePath != null
+        ? TmdbService.getProfileUrl(profilePath)
+        : '';
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       width: 90,
@@ -520,12 +628,31 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              actor['image'] ?? 'assets/images/avatar.jpg',
-              width: 80,
-              height: 100,
-              fit: BoxFit.cover,
-            ),
+            child: imageUrl.isNotEmpty
+                ? Image.network(
+                    imageUrl,
+                    width: 80,
+                    height: 100,
+                    fit: BoxFit.cover,
+                    errorBuilder: (c, e, s) => Container(
+                      width: 80,
+                      height: 100,
+                      color: AppTheme.surfaceColor,
+                      child: const Icon(
+                        Icons.person,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  )
+                : Container(
+                    width: 80,
+                    height: 100,
+                    color: AppTheme.surfaceColor,
+                    child: const Icon(
+                      Icons.person,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -548,7 +675,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            widget.film.synopsis,
+            widget.movie.overview,
             style: const TextStyle(
               color: AppTheme.textSecondary,
               fontSize: 14,
@@ -628,9 +755,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                             ).viewInsets.bottom,
                           ),
                           child: ReviewModal(
-                            movieTitle: widget.film.title,
-                            movieID: widget.film.id,
-                            posterPath: widget.film.image,
+                            movieTitle: widget.movie.title,
+                            movieID: widget.movie.id,
+                            posterPath: widget.movie.posterPath ?? '',
                             isUpdate: _hasReviewed,
                             existingReviewId: _existingReviewId,
                             onReviewSubmitted: (message) {
@@ -715,10 +842,18 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                   ],
                 ],
               ),
-              if (_movieReviews.length > 3)
+              if (_movieReviews.isNotEmpty)
                 TextButton(
                   onPressed: () {
-                    // TODO: Navigate to all reviews page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AllReviewsPage(
+                          movieTitle: widget.movie.title,
+                          movieId: widget.movie.id,
+                        ),
+                      ),
+                    );
                   },
                   child: const Text(
                     'See all',
@@ -786,8 +921,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     final userName = review['user']?['name'] ?? 'Anonymous';
     final rating = review['rating'] ?? 0;
     final content = review['content'] ?? '';
-    final context = review['context'] ?? '';
+    final reviewContext = review['context'] ?? '';
     final createdAt = review['created_at'] ?? '';
+    final photoPath = review['photo_path'];
 
     // Format date
     String formattedDate = 'Recently';
@@ -801,7 +937,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     }
 
     return Container(
-      width: 220,
+      width: photoPath != null ? 280 : 220,
       margin: const EdgeInsets.symmetric(horizontal: 6),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -809,98 +945,132 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppTheme.dividerColor.withOpacity(0.5)),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: User info and date
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: AppTheme.secondaryColor.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
+          // Review photo (if available)
+          if (photoPath != null && photoPath.toString().isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(right: 12),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  // Use full URL with storage path
+                  'http://10.0.2.2:8000/storage/$photoPath',
+                  width: 60,
+                  height: 80,
+                  fit: BoxFit.cover,
+                  errorBuilder: (c, e, s) => Container(
+                    width: 60,
+                    height: 80,
+                    color: AppTheme.dividerColor,
                     child: const Icon(
-                      Icons.person,
-                      size: 18,
-                      color: AppTheme.secondaryColor,
+                      Icons.image,
+                      color: AppTheme.textSecondary,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    userName,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // Context chip
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
-            ),
-            child: Text(
-              context,
-              style: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Rating
-          Row(
-            children: [
-              const Icon(Icons.star, color: AppTheme.starColor, size: 18),
-              const SizedBox(width: 4),
-              Text(
-                '$rating/10',
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const Spacer(),
-              Text(
-                formattedDate,
-                style: const TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 10,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
+            ),
           // Review content
           Expanded(
-            child: Text(
-              content,
-              style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 12,
-                height: 1.4,
-              ),
-              maxLines: 4,
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header: User info
+                Row(
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: AppTheme.secondaryColor.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        Icons.person,
+                        size: 16,
+                        color: AppTheme.secondaryColor,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        userName,
+                        style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+
+                // Context chip
+                if (reviewContext.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      reviewContext,
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 6),
+
+                // Rating and date
+                Row(
+                  children: [
+                    const Icon(Icons.star, color: AppTheme.starColor, size: 14),
+                    const SizedBox(width: 2),
+                    Text(
+                      '$rating/10',
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      formattedDate,
+                      style: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+
+                // Review content
+                Expanded(
+                  child: Text(
+                    content,
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 11,
+                      height: 1.3,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
