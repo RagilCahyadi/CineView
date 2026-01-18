@@ -1,5 +1,6 @@
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/presentation/screen/popular_page.dart';
+import 'package:cineview/presentation/screen/actor_detail_page.dart';
 import 'package:cineview/presentation/widgets/section_header.dart';
 import 'package:flutter/material.dart';
 import 'package:cineview/data/models/dummy_data_actor.dart';
@@ -31,7 +32,18 @@ class TopActorSection extends StatelessWidget {
             itemBuilder: (context, index) {
               return Padding(
                 padding: const EdgeInsets.only(right: 20),
-                child: _buildActorItem(actors[index]),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ActorDetailPage(actor: actors[index]),
+                      ),
+                    );
+                  },
+                  child: _buildActorItem(actors[index]),
+                ),
               );
             },
           ),
@@ -39,7 +51,6 @@ class TopActorSection extends StatelessWidget {
       ],
     );
   }
-
   Widget _buildActorItem(DummyDataActor actor) {
     return Column(
       children: [
