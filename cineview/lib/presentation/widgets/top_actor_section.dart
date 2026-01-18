@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/actor_model.dart';
-import 'package:cineview/presentation/screen/popular_page.dart';
-import 'package:cineview/presentation/screen/actor_detail_page.dart';
+import 'package:cineview/presentation/screen/see_all_page.dart';
 import 'package:cineview/presentation/widgets/section_header.dart';
 import 'package:cineview/presentation/widgets/actor_card.dart';
 
@@ -30,7 +29,14 @@ class TopActorSection extends StatelessWidget {
           onSeeAllTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const PopularPage()),
+              MaterialPageRoute(
+                builder: (context) => SeeAllPage(
+                  title: 'Top Popular Actor',
+                  type: SeeAllType.actor,
+                  actors: actors,
+                  onActorTap: onActorTap,
+                ),
+              ),
             );
           },
         ),
@@ -69,7 +75,7 @@ class TopActorSection extends StatelessWidget {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 24),
-        itemCount: actors.length,
+        itemCount: actors.length > 5 ? 5 : actors.length,
         itemBuilder: (BuildContext context, int index) {
           ActorModel actor = actors[index];
 
