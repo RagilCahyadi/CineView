@@ -32,7 +32,6 @@ class TmdbService {
     return '$imageBaseUrl$size$profilePath';
   }
 
-  // ===== MOVIES =====
   Future<Map> getPopularMovies({int page = 1}) async {
     return await _tmdb.v3.movies.getPopular(page: page);
   }
@@ -70,11 +69,60 @@ class TmdbService {
     return await _tmdb.v3.movies.getVideos(movieId);
   }
 
+  Future<Map> getMovieReleaseDates(int movieId) async {
+    final response = await _tmdb.v3.movies.getDetails(
+      movieId,
+      appendToResponse: 'release_dates',
+    );
+    return response;
+  }
+
+  Future<Map<String, dynamic>> getMovieWithDetails(
+    int movieId, {
+    String countryCode = 'US',
+  }) async {
+    try {
+      final details = await _tmdb.v3.movies.getDetails(
+        movieId,
+        appendToResponse: 'release_dates',
+      );
+
+      String? certification;
+      final releaseDates = details['release_dates']?['results'] as List?;
+
+      if (releaseDates != null) {
+        for (var country in releaseDates) {
+          if (country['iso_3166_1'] == countryCode ||
+              country['iso_3166_1'] == 'US') {
+            final releases = country['release_dates'] as List?;
+            if (releases != null && releases.isNotEmpty) {
+              for (var release in releases) {
+                if (release['certification'] != null &&
+                    release['certification'].toString().isNotEmpty) {
+                  certification = release['certification'];
+                  break;
+                }
+              }
+            }
+            if (certification != null && country['iso_3166_1'] == countryCode) {
+              break;
+            }
+          }
+        }
+      }
+
+      details['certification'] = certification;
+
+      return Map<String, dynamic>.from(details);
+    } catch (e) {
+      return {};
+    }
+  }
+
   Future<Map> getSimilarMovies(int movieId, {int page = 1}) async {
     return await _tmdb.v3.movies.getSimilar(movieId, page: page);
   }
 
-  // ===== SEARCH =====
   Future<Map> searchMovies(String query, {int page = 1}) async {
     return await _tmdb.v3.search.queryMovies(query, page: page);
   }
@@ -83,7 +131,6 @@ class TmdbService {
     return await _tmdb.v3.search.queryPeople(query, page: page);
   }
 
-  // ===== PEOPLE/ACTORS =====
   Future<Map> getPopularPeople({int page = 1}) async {
     return await _tmdb.v3.people.getPopular(page: page);
   }
@@ -105,38 +152,45 @@ class TmdbService {
     return await _tmdb.v3.people.getMovieCredits(personId);
   }
 
-  // ===== HOT TRAILERS =====
   Future<List<Map<String, dynamic>>> getHotTrailers({int limit = 5}) async {
-    final trending = await getTrendingMovies();
-    List<Map<String, dynamic>> trailers = [];
+    try {
+      final trending = await getTrendingMovies();
+      List<Map<String, dynamic>> trailers = [];
 
-    final results = trending['results'] as List? ?? [];
+      final results = trending['results'] as List? ?? [];
 
-    for (
-      int i = 0;
-      i < (results.length > limit ? limit : results.length);
-      i++
-    ) {
-      final movieId = results[i]['id'];
-      final videos = await getMovieVideos(movieId);
-      final videoList = videos['results'] as List? ?? [];
+      for (int i = 0; i < results.length && trailers.length < limit; i++) {
+        try {
+          final movieId = results[i]['id'];
+          final videos = await getMovieVideos(movieId);
+          final videoList = videos['results'] as List? ?? [];
 
-      final trailer = videoList.firstWhere(
-        (v) => v['type'] == 'Trailer' && v['site'] == 'YouTube',
-        orElse: () => null,
-      );
+          Map<String, dynamic>? trailer;
+          for (var v in videoList) {
+            if (v['type'] == 'Trailer' && v['site'] == 'YouTube') {
+              trailer = v;
+              break;
+            }
+          }
 
-      if (trailer != null) {
-        trailers.add({
-          'movie': results[i],
-          'trailer': trailer,
-          'youtube_url': 'https://www.youtube.com/watch?v=${trailer['key']}',
-          'thumbnail':
-              'https://img.youtube.com/vi/${trailer['key']}/hqdefault.jpg',
-        });
+          if (trailer != null) {
+            trailers.add({
+              'movie': results[i],
+              'trailer': trailer,
+              'youtube_url':
+                  'https://www.youtube.com/watch?v=${trailer['key']}',
+              'thumbnail':
+                  'https://img.youtube.com/vi/${trailer['key']}/hqdefault.jpg',
+            });
+          }
+        } catch (e) {
+          continue;
+        }
       }
-    }
 
-    return trailers;
+      return trailers;
+    } catch (e) {
+      return [];
+    }
   }
 }
