@@ -29,6 +29,13 @@ class ActorModel {
     );
   }
 
-  String get genderDisplay =>
-      gender == 1 ? 'Female' : (gender == 2 ? 'Male' : 'Unknown');
+  String get genderDisplay {
+    if (gender == 1) {
+      return 'Female';
+    } else if (gender == 2) {
+      return 'Male';
+    } else {
+      return 'Unknown';
+    }
+  }
 }
