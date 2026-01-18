@@ -25,6 +25,7 @@ dependencies:
   shimmer: ^3.0.0
   tmdb_api: ^2.2.3
   flutter_dotenv: ^6.0.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
