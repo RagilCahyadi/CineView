@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:cineview/presentation/widgets/now_playing_section.dart';
 import 'package:cineview/presentation/widgets/tmdb_featured_card.dart';
+import 'package:cineview/presentation/screen/movie_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/movie_model.dart';
@@ -165,7 +166,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _navigateToMovieDetail(MovieModel movie) {
-    log('Navigate to: ${movie.title}');
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MovieDetailScreen(movie: movie)),
+    );
   }
 
   void _navigateToActorDetail(ActorModel actor) {
