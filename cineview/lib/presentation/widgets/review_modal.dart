@@ -77,7 +77,7 @@ class _ReviewModalState extends State<ReviewModal> {
         if (review != null && mounted) {
           // Debug: Print photo path
           log('Loaded review photo path: ${review['photo_path']}');
-          
+
           setState(() {
             _rating = review['rating'] ?? 0;
             _contextController.text = review['context'] ?? '';
@@ -89,26 +89,18 @@ class _ReviewModalState extends State<ReviewModal> {
           setState(() {
             _isLoadingReview = false;
           });
-          
+
           if (mounted) {
-            _showTopNotification(
-              context,
-              'Review not found',
-              Colors.red,
-            );
+            _showTopNotification(context, 'Review not found', Colors.red);
           }
         }
       } else {
         setState(() {
           _isLoadingReview = false;
         });
-        
+
         if (mounted) {
-          _showTopNotification(
-            context,
-            'Failed to load reviews',
-            Colors.red,
-          );
+          _showTopNotification(context, 'Failed to load reviews', Colors.red);
         }
       }
     } catch (e) {
@@ -303,10 +295,7 @@ class _ReviewModalState extends State<ReviewModal> {
               SizedBox(height: 16),
               Text(
                 'Loading review data...',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.white70, fontSize: 14),
               ),
             ],
           ),
@@ -339,14 +328,25 @@ class _ReviewModalState extends State<ReviewModal> {
             ),
 
             // Movie poster (if available)
-            if (widget.posterPath != null)
+            if (widget.posterPath != null && widget.posterPath!.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  widget.posterPath!,
+                child: Image.network(
+                  'https://image.tmdb.org/t/p/w200${widget.posterPath!}',
                   height: 80,
                   width: 60,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 80,
+                      width: 60,
+                      color: AppTheme.surfaceColor,
+                      child: const Icon(
+                        Icons.movie,
+                        color: AppTheme.textSecondary,
+                      ),
+                    );
+                  },
                 ),
               ),
             const SizedBox(height: 12),
@@ -551,7 +551,9 @@ class _ReviewModalState extends State<ReviewModal> {
                               },
                             ),
                             // Add option to remove photo if updating
-                            if (widget.isUpdate && (_selectedImage != null || _existingPhotoPath != null))
+                            if (widget.isUpdate &&
+                                (_selectedImage != null ||
+                                    _existingPhotoPath != null))
                               ListTile(
                                 leading: const Icon(
                                   Icons.delete,
@@ -598,7 +600,7 @@ class _ReviewModalState extends State<ReviewModal> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                
+
                 // Show selected image (new upload)
                 if (_selectedImage != null)
                   Stack(
@@ -638,7 +640,8 @@ class _ReviewModalState extends State<ReviewModal> {
                     ],
                   )
                 // Show existing photo from server
-                else if (_existingPhotoPath != null && _existingPhotoPath!.isNotEmpty)
+                else if (_existingPhotoPath != null &&
+                    _existingPhotoPath!.isNotEmpty)
                   Stack(
                     children: [
                       ClipRRect(
@@ -660,9 +663,10 @@ class _ReviewModalState extends State<ReviewModal> {
                               ),
                               child: Center(
                                 child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes != null
+                                  value:
+                                      loadingProgress.expectedTotalBytes != null
                                       ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
+                                            loadingProgress.expectedTotalBytes!
                                       : null,
                                   strokeWidth: 2,
                                   color: AppTheme.primaryColor,
@@ -674,7 +678,7 @@ class _ReviewModalState extends State<ReviewModal> {
                             // Debug: Print error
                             log('Image load error: $error');
                             log('Image path: $_existingPhotoPath');
-                            
+
                             return Container(
                               width: 80,
                               height: 80,
