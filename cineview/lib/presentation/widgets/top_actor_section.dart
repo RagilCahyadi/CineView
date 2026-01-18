@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/actor_model.dart';
 import 'package:cineview/presentation/screen/popular_page.dart';
+import 'package:cineview/presentation/screen/actor_detail_page.dart';
 import 'package:cineview/presentation/widgets/section_header.dart';
 import 'package:cineview/presentation/widgets/actor_card.dart';
 

@@ -12,7 +12,7 @@ class WatchlistPage extends StatefulWidget {
 
 class _WatchlistPageState extends State<WatchlistPage> {
   final WatchlistServices _watchlistService = WatchlistServices();
-  
+
   List<dynamic> _watchlistItems = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -42,7 +42,9 @@ class _WatchlistPageState extends State<WatchlistPage> {
   }
 
   Future<void> _removeFromWatchlist(int watchlistId, int index) async {
-    final result = await _watchlistService.removeMovieFromWatchlist(watchlistId);
+    final result = await _watchlistService.removeMovieFromWatchlist(
+      watchlistId,
+    );
 
     if (result['success'] == true) {
       setState(() {
@@ -90,7 +92,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return _buildSkeletonGrid();  // ← Skeleton loading
+      return _buildSkeletonGrid(); // ← Skeleton loading
     }
 
     if (_errorMessage != null) {
@@ -114,7 +116,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
-      itemCount: 6,  // Show 6 skeleton cards
+      itemCount: 6, // Show 6 skeleton cards
       itemBuilder: (context, index) {
         return _buildSkeletonCard();
       },
@@ -286,13 +288,21 @@ class _WatchlistPageState extends State<WatchlistPage> {
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
                               color: Colors.grey[800],
-                              child: const Icon(Icons.movie, size: 50, color: Colors.grey),
+                              child: const Icon(
+                                Icons.movie,
+                                size: 50,
+                                color: Colors.grey,
+                              ),
                             );
                           },
                         )
                       : Container(
                           color: Colors.grey[800],
-                          child: const Icon(Icons.movie, size: 50, color: Colors.grey),
+                          child: const Icon(
+                            Icons.movie,
+                            size: 50,
+                            color: Colors.grey,
+                          ),
                         ),
                   Positioned(
                     top: 8,
@@ -305,7 +315,11 @@ class _WatchlistPageState extends State<WatchlistPage> {
                           color: Colors.black.withOpacity(0.6),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.bookmark_remove, color: Colors.white, size: 16),
+                        child: const Icon(
+                          Icons.bookmark_remove,
+                          color: Colors.white,
+                          size: 16,
+                        ),
                       ),
                     ),
                   ),
