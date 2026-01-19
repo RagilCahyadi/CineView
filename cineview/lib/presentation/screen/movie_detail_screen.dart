@@ -94,12 +94,14 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
       log('Final trailer videoId: $videoId');
 
-      setState(() {
-        _movieDetails = details;
-        _cast = (credits['cast'] as List? ?? []).take(10).toList();
-        _trailerVideoId = videoId;
-        _isLoadingDetails = false;
-      });
+      if (mounted) {
+        setState(() {
+          _movieDetails = details;
+          _cast = (credits['cast'] as List? ?? []).take(10).toList();
+          _trailerVideoId = videoId;
+          _isLoadingDetails = false;
+        });
+      }
     } catch (e) {
       log('Error loading movie details: $e');
       setState(() {
