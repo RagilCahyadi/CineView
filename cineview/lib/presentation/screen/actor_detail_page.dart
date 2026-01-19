@@ -497,7 +497,7 @@ class _ActorDetailPageState extends State<ActorDetailPage> {
                     Image.network(
                       'https://image.tmdb.org/t/p/w200${movie.posterPath}',
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (context, error, stackTrace) => Container(
                         color: AppTheme.surfaceColor,
                         child: const Icon(
                           Icons.movie,
