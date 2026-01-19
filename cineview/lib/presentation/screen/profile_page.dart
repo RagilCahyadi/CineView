@@ -175,11 +175,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           fit: BoxFit.cover,
                           width: 100,
                           height: 100,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.person,
-                            size: 50,
-                            color: Colors.grey,
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(
+                                Icons.person,
+                                size: 50,
+                                color: Colors.grey,
+                              ),
                         ),
                       )
                     : const Icon(Icons.person, size: 50, color: Colors.grey),
