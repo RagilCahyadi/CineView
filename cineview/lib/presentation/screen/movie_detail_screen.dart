@@ -3,10 +3,12 @@ import 'dart:developer';
 import 'package:cineview/data/services/review_services.dart';
 import 'package:cineview/presentation/screen/all_reviews_page.dart';
 import 'package:cineview/presentation/screen/trailer_player_screen.dart';
+import 'package:cineview/presentation/screen/actor_detail_page.dart';
 import 'package:cineview/presentation/widgets/review_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/movie_model.dart';
+import 'package:cineview/data/models/actor_model.dart';
 import 'package:cineview/data/services/tmdb_service.dart';
 import 'package:cineview/data/services/watchlist_services.dart';
 
@@ -19,7 +21,7 @@ class MovieDetailScreen extends StatefulWidget {
   State<MovieDetailScreen> createState() => _MovieDetailScreenState();
 }
 
-class   _MovieDetailScreenState extends State<MovieDetailScreen> {
+class _MovieDetailScreenState extends State<MovieDetailScreen> {
   bool _hasReviewed = false;
   bool _isCheckingReview = true;
   int? _existingReviewId;
@@ -485,7 +487,7 @@ class   _MovieDetailScreenState extends State<MovieDetailScreen> {
               // Add genres
               if (_movieDetails?['genres'] != null)
                 ...(_movieDetails!['genres'] as List)
-                    .take(2) 
+                    .take(2)
                     .map((genre) => _buildInfoChip(genre['name'] ?? '')),
             ],
           ),
@@ -623,20 +625,47 @@ class   _MovieDetailScreenState extends State<MovieDetailScreen> {
         ? TmdbService.getProfileUrl(profilePath)
         : '';
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: 90,
-      child: Column(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: imageUrl.isNotEmpty
-                ? Image.network(
-                    imageUrl,
-                    width: 80,
-                    height: 100,
-                    fit: BoxFit.cover,
-                    errorBuilder: (c, e, s) => Container(
+    return GestureDetector(
+      onTap: () {
+        // Convert to ActorModel and navigate
+        final actorModel = ActorModel(
+          id: actor['id'] ?? 0,
+          name: actor['name'] ?? '',
+          profilePath: actor['profile_path'],
+          knownForDepartment: actor['known_for_department'],
+          popularity: (actor['popularity'] ?? 0).toDouble(),
+          gender: actor['gender'] ?? 0,
+          knownFor: [],
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ActorDetailPage(actor: actorModel)),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        width: 90,
+        child: Column(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: imageUrl.isNotEmpty
+                  ? Image.network(
+                      imageUrl,
+                      width: 80,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) => Container(
+                        width: 80,
+                        height: 100,
+                        color: AppTheme.surfaceColor,
+                        child: const Icon(
+                          Icons.person,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    )
+                  : Container(
                       width: 80,
                       height: 100,
                       color: AppTheme.surfaceColor,
@@ -645,18 +674,9 @@ class   _MovieDetailScreenState extends State<MovieDetailScreen> {
                         color: AppTheme.textSecondary,
                       ),
                     ),
-                  )
-                : Container(
-                    width: 80,
-                    height: 100,
-                    color: AppTheme.surfaceColor,
-                    child: const Icon(
-                      Icons.person,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
