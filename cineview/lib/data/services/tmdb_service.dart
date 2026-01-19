@@ -123,7 +123,7 @@ class TmdbService {
     return await _tmdb.v3.movies.getSimilar(movieId, page: page);
   }
 
-  Future<Map> searchMovies(String query, {int page = 1}) async {
+  Future<Map> searchMovies({required String query, int page = 1}) async {
     return await _tmdb.v3.search.queryMovies(query, page: page);
   }
 

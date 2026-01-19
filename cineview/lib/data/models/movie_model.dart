@@ -8,6 +8,7 @@ class MovieModel {
   final List<int> genreIds;
   final double popularity;
   final bool adult;
+  final double voteAverage;
   final int? runtime;
   final String? certification;
 
@@ -21,6 +22,7 @@ class MovieModel {
     required this.genreIds,
     required this.popularity,
     required this.adult,
+    required this.voteAverage,
     this.runtime,
     this.certification,
   });
@@ -36,6 +38,7 @@ class MovieModel {
       genreIds: List<int>.from(json['genre_ids'] ?? []),
       popularity: (json['popularity'] ?? 0).toDouble(),
       adult: json['adult'] ?? false,
+      voteAverage: (json['vote_average'] ?? 0).toDouble(),
       runtime: json['runtime'],
       certification: json['certification'],
     );

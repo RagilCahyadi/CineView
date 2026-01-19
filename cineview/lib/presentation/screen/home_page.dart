@@ -185,7 +185,10 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SearchBarWidget(),
+            const SearchBarWidget(
+              hintText: "Mencari sesuatu?",
+              showTuneIcon: false,
+            ),
             const SizedBox(height: 10),
 
             _buildFeaturedCarousel(),
