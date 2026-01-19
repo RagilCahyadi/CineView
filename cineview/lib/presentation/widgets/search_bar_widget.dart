@@ -143,7 +143,7 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
                             width: 40,
                             height: 60,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
+                            errorBuilder: (context, error, stackTrace) =>
                                 const Icon(Icons.movie, color: Colors.grey),
                           ),
                         )

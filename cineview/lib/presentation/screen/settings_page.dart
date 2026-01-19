@@ -137,12 +137,13 @@ class _SettingsPageState extends State<SettingsPage> {
                                         fit: BoxFit.cover,
                                         width: 60,
                                         height: 60,
-                                        errorBuilder: (_, __, ___) =>
-                                            const Icon(
-                                              Icons.person,
-                                              color: Colors.grey,
-                                              size: 30,
-                                            ),
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                const Icon(
+                                                  Icons.person,
+                                                  color: Colors.grey,
+                                                  size: 30,
+                                                ),
                                       ),
                                     )
                                   : const Icon(
