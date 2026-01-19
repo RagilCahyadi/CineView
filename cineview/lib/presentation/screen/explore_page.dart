@@ -4,6 +4,7 @@ import 'package:cineview/presentation/widgets/search_bar_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/presentation/screen/movie_detail_screen.dart';
+import 'package:cineview/presentation/widgets/filter_modal.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({super.key});
@@ -27,6 +28,10 @@ class _ExplorePageState extends State<ExplorePage> {
   int _selectedCategory = 0;
   List<MovieModel> _movies = [];
   bool _isLoading = true;
+  List<int>? _filterGenres;
+  int? _filterYear;
+  String? _filterCertification;
+  bool _isFiltered = false;
 
   @override
   void initState() {
@@ -79,6 +84,52 @@ class _ExplorePageState extends State<ExplorePage> {
     super.dispose();
   }
 
+  void _showFilterModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => FilterModal(
+        selectedGenres: _filterGenres,
+        selectedYear: _filterYear,
+        selectedCertification: _filterCertification,
+        onApply: (genres, year, certification) {
+          setState(() {
+            _filterGenres = genres;
+            _filterYear = year;
+            _filterCertification = certification;
+            _isFiltered =
+                genres != null || year != null || certification != null;
+          });
+          _applyFilters();
+        },
+      ),
+    );
+  }
+
+  Future<void> _applyFilters() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await _tmdbService.discoverMovies(
+        withGenres: _filterGenres?.join(','),
+        primaryReleaseYear: _filterYear,
+        certification: _filterCertification,
+      );
+      final List<dynamic> results = response['results'] ?? [];
+
+      if (mounted) {
+        setState(() {
+          _movies = results.map((e) => MovieModel.fromJson(e)).toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Filter error: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -93,9 +144,10 @@ class _ExplorePageState extends State<ExplorePage> {
                 const SizedBox(height: 20),
                 _buildHeader(),
                 const SizedBox(height: 20),
-                const SearchBarWidget(
+                SearchBarWidget(
                   hintText: "Search movies",
                   showTuneIcon: true,
+                  onFilterTap: _showFilterModal,
                 ),
                 const SizedBox(height: 20),
                 _buildCategoryChips(),

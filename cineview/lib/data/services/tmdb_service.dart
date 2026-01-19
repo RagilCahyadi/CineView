@@ -66,7 +66,26 @@ class TmdbService {
   }
 
   Future<Map> getMovieVideos(int movieId) async {
-    return await _tmdb.v3.movies.getVideos(movieId);
+    return await _tmdb.v3.movies.getVideos(movieId, language: 'en-US');
+  }
+
+  Future<Map> getMovieGenres() async {
+    return await _tmdb.v3.genres.getMovieList();
+  }
+
+  Future<Map> discoverMovies({
+    int page = 1,
+    String? withGenres,
+    int? primaryReleaseYear,
+    String? certification,
+  }) async {
+    return await _tmdb.v3.discover.getMovies(
+      page: page,
+      withGenres: withGenres,
+      primaryReleaseYear: primaryReleaseYear,
+      certification: certification,
+      certificationCountry: 'US',
+    );
   }
 
   Future<Map> getMovieReleaseDates(int movieId) async {
