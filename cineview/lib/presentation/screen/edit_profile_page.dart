@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/services/auth_service.dart';
-import 'package:cineview/presentation/screen/login_page.dart';
+import 'package:cineview/data/services/storage_service.dart';
+import 'package:cineview/presentation/screen/change_password_page.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -13,21 +14,56 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  final _nameController = TextEditingController(text: 'BAHLIL');
-  final _emailController = TextEditingController(text: 'bahlil123@gmail.com');
-  final _phoneController = TextEditingController(text: '081234567891');
-
-  bool _isMale = true;
-  bool _isFemale = false;
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _authService = AuthService();
+  final _storageService = StorageService();
 
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
+  bool _isLoading = true;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    // Load from local storage first (immediate)
+    final user = await _storageService.getUser();
+
+    if (mounted && user != null) {
+      setState(() {
+        _nameController.text = user['name'] ?? '';
+        _emailController.text = user['email'] ?? '';
+        _isLoading = false;
+      });
+    } else {
+      // If no local data, try API
+      try {
+        final result = await _authService.getProfile();
+        if (result['success'] == true && mounted) {
+          final apiUser = result['user'];
+          setState(() {
+            _nameController.text = apiUser['name'] ?? '';
+            _emailController.text = apiUser['email'] ?? '';
+            _isLoading = false;
+          });
+        } else if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      } catch (e) {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
 
@@ -75,7 +111,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.2),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -101,7 +137,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.2),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -135,31 +171,33 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 16),
-                _buildHeader(context),
-                const SizedBox(height: 24),
-                _buildAvatar(),
-                const SizedBox(height: 32),
-                _buildNameField(),
-                const SizedBox(height: 16),
-                _buildEmailField(),
-                const SizedBox(height: 16),
-                _buildPhoneField(),
-                const SizedBox(height: 16),
-                _buildGenderField(),
-                const SizedBox(height: 32),
-                _buildSaveChangesButton(),
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
-        ),
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: AppTheme.primaryColor),
+              )
+            : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 16),
+                      _buildHeader(context),
+                      const SizedBox(height: 24),
+                      _buildAvatar(),
+                      const SizedBox(height: 32),
+                      _buildNameField(),
+                      const SizedBox(height: 16),
+                      _buildEmailField(),
+                      const SizedBox(height: 32),
+                      _buildSaveChangesButton(),
+                      const SizedBox(height: 16),
+                      _buildChangePasswordButton(),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
       ),
     );
   }
@@ -211,14 +249,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.grey[700]!, width: 2),
-                image: DecorationImage(
-                  image: _profileImage != null
-                      ? FileImage(_profileImage!)
-                      : const AssetImage('assets/images/avatar.jpg')
-                            as ImageProvider,
-                  fit: BoxFit.cover,
-                ),
+                color: AppTheme.surfaceColor,
               ),
+              child: _profileImage != null
+                  ? ClipOval(
+                      child: Image.file(
+                        _profileImage!,
+                        fit: BoxFit.cover,
+                        width: 100,
+                        height: 100,
+                      ),
+                    )
+                  : const Icon(Icons.person, size: 50, color: Colors.grey),
             ),
             Positioned(
               right: 0,
@@ -249,6 +291,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     required IconData icon,
     required TextEditingController controller,
     TextInputType? keyboardType,
+    bool enabled = true,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,7 +310,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
         TextField(
           controller: controller,
           keyboardType: keyboardType,
-          style: const TextStyle(color: Colors.white),
+          enabled: enabled,
+          style: TextStyle(color: enabled ? Colors.white : Colors.grey[600]),
           decoration: InputDecoration(
             filled: true,
             fillColor: AppTheme.surfaceColor,
@@ -278,6 +322,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Colors.grey[700]!),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[800]!),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -303,72 +351,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Widget _buildEmailField() {
     return _buildTextField(
-      label: 'Email',
+      label: 'Email (cannot be changed)',
       icon: Icons.email_outlined,
       controller: _emailController,
       keyboardType: TextInputType.emailAddress,
-    );
-  }
-
-  Widget _buildPhoneField() {
-    return _buildTextField(
-      label: 'Phone Number',
-      icon: Icons.phone_outlined,
-      controller: _phoneController,
-      keyboardType: TextInputType.phone,
-    );
-  }
-
-  Widget _buildGenderField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Gender',
-          style: TextStyle(color: Colors.white, fontSize: 14),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            _buildGenderCheckbox('Male', _isMale, (value) {
-              setState(() {
-                _isMale = value ?? false;
-                if (_isMale) _isFemale = false;
-              });
-            }),
-            const SizedBox(width: 24),
-            _buildGenderCheckbox('Female', _isFemale, (value) {
-              setState(() {
-                _isFemale = value ?? false;
-                if (_isFemale) _isMale = false;
-              });
-            }),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGenderCheckbox(
-    String label,
-    bool value,
-    Function(bool?) onChanged,
-  ) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 24,
-          height: 24,
-          child: Checkbox(
-            value: value,
-            onChanged: onChanged,
-            activeColor: AppTheme.primaryColor,
-            side: BorderSide(color: Colors.grey[500]!),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 14)),
-      ],
+      enabled: false,
     );
   }
 
@@ -376,7 +363,92 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _handleSaveChanges,
+        onPressed: _isSaving ? null : _handleSaveChanges,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppTheme.primaryColor,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppTheme.primaryColor.withValues(alpha: 0.5),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+        ),
+        child: _isSaving
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : const Text(
+                'Save Changes',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+      ),
+    );
+  }
+
+  Future<void> _handleSaveChanges() async {
+    final name = _nameController.text.trim();
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Name cannot be empty'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      final result = await _authService.updateProfile(name: name);
+
+      if (!mounted) return;
+
+      setState(() => _isSaving = false);
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Profile updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true); // Return true to indicate update
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Failed to update profile'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
+    }
+  }
+
+  Widget _buildChangePasswordButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
+          );
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primaryColor,
           foregroundColor: Colors.white,
@@ -386,16 +458,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
         ),
         child: const Text(
-          'Save Changes',
+          'Change Password',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
     );
-  }
-  void _handleSaveChanges() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Profile updated successfully!')),
-    );
-    Navigator.pop(context);
   }
 }

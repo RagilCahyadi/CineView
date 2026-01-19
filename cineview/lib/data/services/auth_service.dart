@@ -57,15 +57,13 @@ class AuthService {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+        body: jsonEncode({'email': email, 'password': password}),
       );
 
       final data = jsonDecode(response.body);
 
-      if (response.statusCode == 200){
+      if (response.statusCode == 200) {
+        await _storageService.saveUser(data['user']);
         await _storageService.saveToken(data['token']);
         return {
           'success': true,
@@ -91,28 +89,127 @@ class AuthService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': 'Bearer $token'
-        }
+          'Authorization': 'Bearer $token',
+        },
       );
 
       await _storageService.deleteToken();
 
-      if (response.statusCode == 200){
-        return {
-          'success': true,
-          'message': 'logged out successfully'
-        };
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'logged out successfully'};
       } else {
-        return {
-          'success': false,
-          'message': 'Logged out locally'
-        };
+        return {'success': false, 'message': 'Logged out locally'};
       }
     } catch (e) {
       await _storageService.deleteToken();
       return {'success': false, 'message': 'Logged out locally'};
     }
   }
+
+  Future<Map<String, dynamic>> getProfile() async {
+    try {
+      final token = await _storageService.getToken();
+      final response = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}${ApiConstants.profile}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        // Update stored user data
+        await _storageService.saveUser(data['user'] ?? data);
+        return {'success': true, 'user': data['user'] ?? data};
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Failed to get profile',
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Connection error: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> updateProfile({
+    required String name,
+    String? email,
+  }) async {
+    try {
+      final token = await _storageService.getToken();
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}${ApiConstants.updateProfile}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'name': name, if (email != null) 'email': email}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        // Update stored user data
+        if (data['user'] != null) {
+          await _storageService.saveUser(data['user']);
+        }
+        return {
+          'success': true,
+          'user': data['user'],
+          'message': data['message'] ?? 'Profile updated',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Failed to update profile',
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Connection error: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> changePassword({
+    required String oldPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      final token = await _storageService.getToken();
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}${ApiConstants.changePassword}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'old_password': oldPassword,
+          'new_password': newPassword,
+          'new_password_confirmation': confirmPassword,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Password changed successfully',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Failed to change password',
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Connection error: $e'};
+    }
+  }
 }
-
-
