@@ -17,6 +17,7 @@ class _TmdbMovieCardState extends State<TmdbMovieCard> {
   final TmdbService _tmdbService = TmdbService();
   String? _certification;
   int? _runtime;
+  // ignore: unused_field
   bool _isLoaded = false;
 
   @override

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cineview/core/theme/app_theme.dart';
+import 'package:cineview/core/constants/api_constants.dart';
 import 'package:cineview/data/services/auth_service.dart';
 import 'package:cineview/data/services/storage_service.dart';
 import 'package:cineview/presentation/screen/change_password_page.dart';
@@ -20,6 +21,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _storageService = StorageService();
 
   File? _profileImage;
+  String? _existingProfilePhoto;
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = true;
   bool _isSaving = false;
@@ -38,6 +40,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
       setState(() {
         _nameController.text = user['name'] ?? '';
         _emailController.text = user['email'] ?? '';
+        if (user['profile_photo'] != null) {
+          _existingProfilePhoto =
+              '${ApiConstants.storageUrl}/${user['profile_photo']}';
+        }
         _isLoading = false;
       });
     } else {
@@ -49,6 +55,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
           setState(() {
             _nameController.text = apiUser['name'] ?? '';
             _emailController.text = apiUser['email'] ?? '';
+            if (apiUser['profile_photo'] != null) {
+              _existingProfilePhoto =
+                  '${ApiConstants.storageUrl}/${apiUser['profile_photo']}';
+            }
             _isLoading = false;
           });
         } else if (mounted) {
@@ -260,6 +270,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         height: 100,
                       ),
                     )
+                  : _existingProfilePhoto != null
+                  ? ClipOval(
+                      child: Image.network(
+                        _existingProfilePhoto!,
+                        fit: BoxFit.cover,
+                        width: 100,
+                        height: 100,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.person,
+                          size: 50,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    )
                   : const Icon(Icons.person, size: 50, color: Colors.grey),
             ),
             Positioned(
@@ -406,13 +430,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
     setState(() => _isSaving = true);
 
     try {
-      final result = await _authService.updateProfile(name: name);
+      final result = await _authService.updateProfile(
+        name: name,
+        profileImage: _profileImage,
+      );
 
       if (!mounted) return;
 
       setState(() => _isSaving = false);
 
       if (result['success'] == true) {
+        // Update existing photo from response for real-time display
+        final user = result['user'];
+        if (user != null && user['profile_photo'] != null) {
+          setState(() {
+            _existingProfilePhoto =
+                '${ApiConstants.storageUrl}/${user['profile_photo']}';
+            _profileImage = null; // Clear local file
+          });
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result['message'] ?? 'Profile updated successfully!'),
