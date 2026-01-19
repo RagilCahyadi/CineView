@@ -12,7 +12,7 @@ class TmdbService {
     _tmdb = TMDB(
       ApiKeys(_apiKey, _readAccessToken),
       logConfig: const ConfigLogger(showLogs: true, showErrorLogs: true),
-      defaultLanguage: 'id-ID',
+      defaultLanguage: 'en-US',
     );
   }
 

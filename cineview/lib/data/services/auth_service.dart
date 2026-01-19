@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:cineview/core/constants/api_constants.dart';
 import 'storage_service.dart';
@@ -138,19 +139,36 @@ class AuthService {
   Future<Map<String, dynamic>> updateProfile({
     required String name,
     String? email,
+    File? profileImage,
   }) async {
     try {
       final token = await _storageService.getToken();
-      final response = await http.post(
+
+      // Use MultipartRequest for file upload
+      var request = http.MultipartRequest(
+        'POST',
         Uri.parse('${ApiConstants.baseUrl}${ApiConstants.updateProfile}'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({'name': name, if (email != null) 'email': email}),
       );
 
+      request.headers.addAll({
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
+
+      request.fields['name'] = name;
+      if (email != null) {
+        request.fields['email'] = email;
+      }
+
+      // Add profile image if provided
+      if (profileImage != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('profile_photo', profileImage.path),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {

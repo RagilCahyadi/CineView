@@ -37,6 +37,7 @@ class   _MovieDetailScreenState extends State<MovieDetailScreen> {
   int? _watchlistItemId;
   Map<String, dynamic>? _movieDetails;
   List<dynamic> _cast = [];
+  // ignore: unused_field
   bool _isLoadingDetails = true;
   String? _trailerVideoId;
 
@@ -119,6 +120,8 @@ class   _MovieDetailScreenState extends State<MovieDetailScreen> {
         widget.movie.id,
       );
 
+      if (!mounted) return;
+
       if (result['success'] == true) {
         setState(() {
           _isInWatchlist = result['in_watchlist'] ?? false;
@@ -129,6 +132,7 @@ class   _MovieDetailScreenState extends State<MovieDetailScreen> {
       // If in watchlist, get the watchlist item id
       if (_isInWatchlist) {
         final listResult = await watchlistService.getWatchlist();
+        if (!mounted) return;
         if (listResult['success'] == true) {
           final items = listResult['data'] as List;
           final item = items.firstWhere(
@@ -148,6 +152,7 @@ class   _MovieDetailScreenState extends State<MovieDetailScreen> {
       }
     } catch (e) {
       log('Error checking watchlist: $e');
+      if (!mounted) return;
       setState(() {
         _isCheckingWatchlist = false;
       });
@@ -167,6 +172,7 @@ class   _MovieDetailScreenState extends State<MovieDetailScreen> {
         final result = await watchlistService.removeMovieFromWatchlist(
           _watchlistItemId!,
         );
+        if (!mounted) return;
         if (result['success'] == true) {
           setState(() {
             _isInWatchlist = false;
@@ -191,6 +197,7 @@ class   _MovieDetailScreenState extends State<MovieDetailScreen> {
           movieTitle: widget.movie.title,
           posterPath: widget.movie.posterPath ?? '',
         );
+        if (!mounted) return;
         if (result['success'] == true) {
           setState(() {
             _isInWatchlist = true;
@@ -211,11 +218,15 @@ class   _MovieDetailScreenState extends State<MovieDetailScreen> {
       }
     } catch (e) {
       log('Watchlist error: $e');
-      _showTopNotification(context, 'Connection error', AppTheme.errorColor);
+      if (mounted) {
+        _showTopNotification(context, 'Connection error', AppTheme.errorColor);
+      }
     } finally {
-      setState(() {
-        _isWatchlistLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isWatchlistLoading = false;
+        });
+      }
     }
   }
 
@@ -225,6 +236,8 @@ class   _MovieDetailScreenState extends State<MovieDetailScreen> {
 
       // Get user's reviews
       final result = await reviewService.getMyReviews();
+
+      if (!mounted) return;
 
       if (result['success'] == true) {
         final reviews = result['data'] as List;
@@ -247,6 +260,7 @@ class   _MovieDetailScreenState extends State<MovieDetailScreen> {
       }
     } catch (e) {
       log('Error checking review: $e');
+      if (!mounted) return;
       setState(() {
         _isCheckingReview = false;
       });
@@ -259,6 +273,8 @@ class   _MovieDetailScreenState extends State<MovieDetailScreen> {
 
       // Get all reviews for this movie
       final result = await reviewService.getReviewsByMovie(widget.movie.id);
+
+      if (!mounted) return;
 
       if (result['success'] == true) {
         setState(() {
@@ -273,7 +289,8 @@ class   _MovieDetailScreenState extends State<MovieDetailScreen> {
         });
       }
     } catch (e) {
-      print('Error loading reviews: $e');
+      debugPrint('Error loading reviews: $e');
+      if (!mounted) return;
       setState(() {
         _isLoadingReviews = false;
       });
