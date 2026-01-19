@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
+import 'package:cineview/core/constants/api_constants.dart';
 import 'package:cineview/data/services/auth_service.dart';
 import 'package:cineview/data/services/storage_service.dart';
 import 'package:cineview/presentation/screen/login_page.dart';
@@ -21,6 +22,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool notifOn = true;
   String _userName = 'Loading...';
   String _userEmail = '';
+  String? _userProfilePhoto;
 
   @override
   void initState() {
@@ -45,6 +47,10 @@ class _SettingsPageState extends State<SettingsPage> {
       setState(() {
         _userName = user!['name'] ?? 'User';
         _userEmail = user['email'] ?? '';
+        if (user['profile_photo'] != null) {
+          _userProfilePhoto =
+              '${ApiConstants.storageUrl}/${user['profile_photo']}';
+        }
       });
     } else if (mounted) {
       setState(() {
@@ -124,11 +130,26 @@ class _SettingsPageState extends State<SettingsPage> {
                                 ),
                                 color: AppTheme.surfaceColor,
                               ),
-                              child: const Icon(
-                                Icons.person,
-                                color: Colors.grey,
-                                size: 30,
-                              ),
+                              child: _userProfilePhoto != null
+                                  ? ClipOval(
+                                      child: Image.network(
+                                        _userProfilePhoto!,
+                                        fit: BoxFit.cover,
+                                        width: 60,
+                                        height: 60,
+                                        errorBuilder: (_, __, ___) =>
+                                            const Icon(
+                                              Icons.person,
+                                              color: Colors.grey,
+                                              size: 30,
+                                            ),
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.person,
+                                      color: Colors.grey,
+                                      size: 30,
+                                    ),
                             ),
                             SizedBox(width: 16),
                             Expanded(
