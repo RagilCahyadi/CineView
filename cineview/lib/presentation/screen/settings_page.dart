@@ -5,6 +5,8 @@ import 'package:cineview/presentation/screen/login_page.dart';
 import 'package:cineview/presentation/screen/edit_profile_page.dart';
 import 'package:cineview/presentation/screen/change_password_page.dart';
 import 'package:cineview/presentation/screen/faq_page.dart';
+import 'package:cineview/presentation/screen/app_version_page.dart';
+import 'package:cineview/presentation/widgets/review_app_dialog.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -437,6 +439,63 @@ class _SettingsPageState extends State<SettingsPage> {
 
                             InkWell(
                               onTap: () {
+                                showReviewAppDialog(context);
+                              },
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 42,
+                                      height: 42,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.primaryColor
+                                            .withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        Icons.star_outline,
+                                        color: AppTheme.primaryColor,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Rate This App',
+                                            style: TextStyle(
+                                              color: AppTheme.textPrimary,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          SizedBox(height: 2),
+                                          Text(
+                                            'Give us your feedback',
+                                            style: TextStyle(
+                                              color: AppTheme.textSecondary,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.chevron_right,
+                                      color: AppTheme.textSecondary,
+                                      size: 22,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            InkWell(
+                              onTap: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Cache cleared!')),
                                 );
@@ -495,7 +554,15 @@ class _SettingsPageState extends State<SettingsPage> {
                             ),
 
                             InkWell(
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const AppVersionPage(),
+                                  ),
+                                );
+                              },
                               child: Padding(
                                 padding: EdgeInsets.all(16),
                                 child: Row(

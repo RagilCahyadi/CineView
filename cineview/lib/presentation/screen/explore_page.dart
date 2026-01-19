@@ -1,6 +1,8 @@
+import 'package:cineview/data/models/movie_model.dart';
+import 'package:cineview/data/services/tmdb_service.dart';
+import 'package:cineview/presentation/widgets/search_bar_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
-import 'package:cineview/data/models/dummy_data_film.dart';
 import 'package:cineview/presentation/screen/movie_detail_screen.dart';
 
 class ExplorePage extends StatefulWidget {
@@ -12,6 +14,7 @@ class ExplorePage extends StatefulWidget {
 
 class _ExplorePageState extends State<ExplorePage> {
   final _searchController = TextEditingController();
+  final TmdbService _tmdbService = TmdbService();
 
   final List<String> _categories = [
     'New in Theater',
@@ -22,18 +25,57 @@ class _ExplorePageState extends State<ExplorePage> {
   ];
 
   int _selectedCategory = 0;
-
-  List<DummyDataFilm> _movies = [];
+  List<MovieModel> _movies = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _movies = contents;
+    _loadMovies();
+  }
+
+  Future<void> _loadMovies() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      Map result;
+      switch (_selectedCategory) {
+        case 0: // New in Theater
+          result = await _tmdbService.getNowPlayingMovies();
+          break;
+        case 1: // Coming Soon
+          result = await _tmdbService.getUpcomingMovies();
+          break;
+        case 2: // International (Using Trending as proxy for now)
+          result = await _tmdbService.getTrendingMovies();
+          break;
+        case 3: // Popular
+          result = await _tmdbService.getPopularMovies();
+          break;
+        case 4: // Top Rated
+          result = await _tmdbService.getTopRatedMovies();
+          break;
+        default:
+          result = await _tmdbService.getPopularMovies();
+      }
+
+      final List<dynamic> results = result['results'];
+      setState(() {
+        _movies = results.map((e) => MovieModel.fromJson(e)).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading movies: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -51,13 +93,22 @@ class _ExplorePageState extends State<ExplorePage> {
                 const SizedBox(height: 20),
                 _buildHeader(),
                 const SizedBox(height: 20),
-                _buildSearchBar(),
+                const SearchBarWidget(
+                  hintText: "Search movies",
+                  showTuneIcon: true,
+                ),
                 const SizedBox(height: 20),
                 _buildCategoryChips(),
                 const SizedBox(height: 20),
                 _buildSectionTitle(),
                 const SizedBox(height: 16),
-                _buildMovieGrid(),
+                _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primaryColor,
+                        ),
+                      )
+                    : _buildMovieGrid(),
                 const SizedBox(height: 100),
               ],
             ),
@@ -66,6 +117,7 @@ class _ExplorePageState extends State<ExplorePage> {
       ),
     );
   }
+
   Widget _buildHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,29 +138,7 @@ class _ExplorePageState extends State<ExplorePage> {
       ],
     );
   }
-  Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TextField(
-        controller: _searchController,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: 'Search movies',
-          hintStyle: TextStyle(color: Colors.grey[600]),
-          prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
-          suffixIcon: Icon(Icons.tune, color: Colors.grey[600]),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-        ),
-      ),
-    );
-  }
+
   Widget _buildCategoryChips() {
     return SizedBox(
       height: 40,
@@ -120,9 +150,12 @@ class _ExplorePageState extends State<ExplorePage> {
 
           return GestureDetector(
             onTap: () {
-              setState(() {
-                _selectedCategory = index;
-              });
+              if (_selectedCategory != index) {
+                setState(() {
+                  _selectedCategory = index;
+                });
+                _loadMovies();
+              }
             },
             child: Container(
               margin: const EdgeInsets.only(right: 12),
@@ -159,6 +192,7 @@ class _ExplorePageState extends State<ExplorePage> {
       ),
     );
   }
+
   Widget _buildSectionTitle() {
     return Row(
       children: [
@@ -177,6 +211,11 @@ class _ExplorePageState extends State<ExplorePage> {
   }
 
   Widget _buildMovieGrid() {
+    if (_movies.isEmpty) {
+      return const Center(
+        child: Text('No movies found.', style: TextStyle(color: Colors.grey)),
+      );
+    }
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -192,13 +231,14 @@ class _ExplorePageState extends State<ExplorePage> {
       },
     );
   }
-  Widget _buildMovieCard(DummyDataFilm movie) {
+
+  Widget _buildMovieCard(MovieModel movie) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MovieDetailScreen(film: movie),
+            builder: (context) => MovieDetailScreen(movie: movie),
           ),
         );
       },
@@ -209,16 +249,24 @@ class _ExplorePageState extends State<ExplorePage> {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                image: DecorationImage(
-                  image: AssetImage(movie.image),
-                  fit: BoxFit.cover,
-                ),
+                color: AppTheme.surfaceColor,
+                image: movie.posterPath != null
+                    ? DecorationImage(
+                        image: NetworkImage(
+                          TmdbService.getPosterUrl(movie.posterPath),
+                        ),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
               ),
+              child: movie.posterPath == null
+                  ? const Center(
+                      child: Icon(Icons.movie, color: Colors.grey, size: 40),
+                    )
+                  : null,
             ),
           ),
-
           const SizedBox(height: 10),
-
           Text(
             movie.title,
             style: const TextStyle(
@@ -229,14 +277,12 @@ class _ExplorePageState extends State<ExplorePage> {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-
           const SizedBox(height: 6),
-
           Row(
             children: [
               Row(
                 children: List.generate(5, (starIndex) {
-                  double rating = double.tryParse(movie.rating) ?? 0;
+                  double rating = movie.voteAverage;
                   double starValue = rating / 2;
 
                   if (starIndex < starValue.floor()) {
@@ -261,9 +307,8 @@ class _ExplorePageState extends State<ExplorePage> {
                 }),
               ),
               const SizedBox(width: 6),
-
               Text(
-                '${movie.rating}/10',
+                '${movie.voteAverage.toStringAsFixed(1)}/10',
                 style: TextStyle(color: Colors.grey[500], fontSize: 12),
               ),
             ],
