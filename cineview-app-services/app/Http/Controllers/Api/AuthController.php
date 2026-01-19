@@ -45,27 +45,28 @@ class AuthController extends Controller
      *   "token": "1|abc123..."
      * }
      */
-    public function register(Request $request){
+    public function register(Request $request)
+    {
         $request->validate([
-            'name'=>['required','string', 'max:255'],
-            'email'=>['required','string','email','unique:users'],
-            'password'=>['required','string','min:8','confirmed'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'unique:users'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
         $user = User::create([
-            'name'=>$request->name,
-            'email'=>$request->email,
-            'password'=>Hash::make($request->password),
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message'=>'Registration successfull',
-            'user'=>$user,
-            'token'=>$token,
+            'message' => 'Registration successfull',
+            'user' => $user,
+            'token' => $token,
         ], 201);
-    }   
+    }
 
     /**
      * Login User
@@ -84,10 +85,11 @@ class AuthController extends Controller
      *   "message": "Invalid credentials"
      * }
      */
-    public function login(Request $request){
+    public function login(Request $request)
+    {
         $request->validate([
-            'email'=>['required','email'],
-            'password'=>['required'],
+            'email' => ['required', 'email'],
+            'password' => ['required'],
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -97,7 +99,7 @@ class AuthController extends Controller
                 'message' => 'Invalid credentials',
             ], 401);
         }
-        
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -118,11 +120,99 @@ class AuthController extends Controller
      *   "message": "Logout succesfull"
      * }
      */
-    public function logout(Request $request){
+    public function logout(Request $request)
+    {
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
             'message' => 'Logout succesfull',
+        ]);
+    }
+
+    /**
+     * Get User Profile
+     * 
+     * Mengambil data profile user yang sedang login.
+     * 
+     * @authenticated
+     * 
+     * @response 200 {
+     *   "user": {"id": 1, "name": "John Doe", "email": "john@example.com"}
+     * }
+     */
+    public function getProfile(Request $request)
+    {
+        return response()->json([
+            'user' => $request->user()
+        ]);
+    }
+
+    /**
+     * Update User Profile
+     * 
+     * Mengupdate data profile user yang sedang login.
+     * 
+     * @authenticated
+     * @bodyParam name string required Nama baru user. Example: John Updated
+     * 
+     * @response 200 {
+     *   "message": "Profile updated successfully",
+     *   "user": {"id": 1, "name": "John Updated", "email": "john@example.com"}
+     * }
+     */
+    public function updateProfile(Request $request)
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ]);
+
+        $user = $request->user();
+        $user->name = $request->name;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => $user
+        ]);
+    }
+
+    /**
+     * Change Password
+     * 
+     * Mengubah password user yang sedang login.
+     * 
+     * @authenticated
+     * @bodyParam old_password string required Password lama. Example: oldpassword123
+     * @bodyParam new_password string required Password baru minimal 8 karakter. Example: newpassword123
+     * @bodyParam new_password_confirmation string required Konfirmasi password baru. Example: newpassword123
+     * 
+     * @response 200 {
+     *   "message": "Password changed successfully"
+     * }
+     * @response 400 {
+     *   "message": "Old password is incorrect"
+     * }
+     */
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'old_password' => ['required', 'string'],
+            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->old_password, $user->password)) {
+            return response()->json([
+                'message' => 'Old password is incorrect'
+            ], 400);
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Password changed successfully'
         ]);
     }
 }

@@ -1,4 +1,5 @@
 import 'package:cineview/core/theme/app_theme.dart';
+import 'package:cineview/data/services/auth_service.dart';
 import 'package:cineview/data/services/storage_service.dart';
 import 'package:cineview/data/services/review_services.dart';
 import 'package:cineview/data/services/watchlist_services.dart';
@@ -35,8 +36,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadUserData() async {
     try {
-      // Load user data
-      final user = await _storageService.getUser();
+      // Load user data - first try local storage
+      var user = await _storageService.getUser();
+
+      // If no local data, try to fetch from API
+      if (user == null) {
+        final authService = AuthService();
+        final result = await authService.getProfile();
+        if (result['success'] == true) {
+          user = result['user'];
+        }
+      }
 
       // Load watchlist
       final watchlistService = WatchlistServices();
