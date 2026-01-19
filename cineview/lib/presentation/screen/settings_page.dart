@@ -538,65 +538,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
                             InkWell(
                               onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Cache cleared!')),
-                                );
-                              },
-                              child: Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 42,
-                                      height: 42,
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.primaryColor
-                                            .withOpacity(0.15),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Icon(
-                                        Icons.cleaning_services_outlined,
-                                        color: AppTheme.primaryColor,
-                                        size: 20,
-                                      ),
-                                    ),
-                                    SizedBox(width: 14),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Clear Cache',
-                                            style: TextStyle(
-                                              color: AppTheme.textPrimary,
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          SizedBox(height: 2),
-                                          Text(
-                                            'Free up storage space',
-                                            style: TextStyle(
-                                              color: AppTheme.textSecondary,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Icon(
-                                      Icons.chevron_right,
-                                      color: AppTheme.textSecondary,
-                                      size: 22,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-
-                            InkWell(
-                              onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
