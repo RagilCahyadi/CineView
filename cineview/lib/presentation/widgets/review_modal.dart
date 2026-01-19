@@ -91,7 +91,11 @@ class _ReviewModalState extends State<ReviewModal> {
           });
 
           if (mounted) {
-            _showTopNotification(context, 'Review not found', Colors.red);
+            _showTopNotification(
+              context,
+              'Review not found',
+              AppTheme.errorColor,
+            );
           }
         }
       } else {
@@ -100,7 +104,11 @@ class _ReviewModalState extends State<ReviewModal> {
         });
 
         if (mounted) {
-          _showTopNotification(context, 'Failed to load reviews', Colors.red);
+          _showTopNotification(
+            context,
+            'Failed to load reviews',
+            AppTheme.errorColor,
+          );
         }
       }
     } catch (e) {
@@ -110,7 +118,11 @@ class _ReviewModalState extends State<ReviewModal> {
       });
 
       if (mounted) {
-        _showTopNotification(context, 'Failed to load review data', Colors.red);
+        _showTopNotification(
+          context,
+          'Failed to load review data',
+          AppTheme.errorColor,
+        );
       }
     }
   }
@@ -237,7 +249,7 @@ class _ReviewModalState extends State<ReviewModal> {
           _showTopNotification(
             context,
             result['message'] ?? 'Failed to submit review',
-            Colors.red,
+            AppTheme.errorColor,
           );
         }
       }
@@ -247,7 +259,75 @@ class _ReviewModalState extends State<ReviewModal> {
       });
 
       if (mounted) {
-        _showTopNotification(context, 'Connection error: $e', Colors.red);
+        _showTopNotification(
+          context,
+          'Connection error: $e',
+          AppTheme.errorColor,
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteReview() async {
+    if (widget.existingReviewId == null) return;
+
+    // Show confirmation dialog
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.surfaceColor,
+        title: const Text(
+          'Hapus Review?',
+          style: TextStyle(color: AppTheme.textPrimary),
+        ),
+        content: const Text(
+          'Review ini akan dihapus permanen. Lanjutkan?',
+          style: TextStyle(color: AppTheme.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final reviewService = ReviewServices();
+      final result = await reviewService.deleteReview(widget.existingReviewId!);
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+
+        if (result['success'] == true) {
+          Navigator.pop(context);
+          widget.onReviewSubmitted?.call('Review deleted successfully');
+        } else {
+          _showTopNotification(
+            context,
+            result['message'] ?? 'Failed to delete',
+            AppTheme.errorColor,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showTopNotification(
+          context,
+          'Error deleting review',
+          AppTheme.errorColor,
+        );
       }
     }
   }
@@ -268,7 +348,11 @@ class _ReviewModalState extends State<ReviewModal> {
       }
     } catch (e) {
       if (mounted) {
-        _showTopNotification(context, 'Failed to pick image: $e', Colors.red);
+        _showTopNotification(
+          context,
+          'Failed to pick image: $e',
+          AppTheme.errorColor,
+        );
       }
     }
   }
@@ -404,7 +488,7 @@ class _ReviewModalState extends State<ReviewModal> {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   'Please select a rating',
-                  style: TextStyle(color: Colors.red[400], fontSize: 12),
+                  style: TextStyle(color: AppTheme.errorColor, fontSize: 12),
                 ),
               ),
 
@@ -415,7 +499,7 @@ class _ReviewModalState extends State<ReviewModal> {
               decoration: BoxDecoration(
                 border: Border.all(
                   color: _hasError && _contextController.text.isEmpty
-                      ? Colors.red
+                      ? AppTheme.errorColor
                       : AppTheme.primaryColor,
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -429,13 +513,13 @@ class _ReviewModalState extends State<ReviewModal> {
                       : 'Write a context (e.g., Action, Drama)',
                   hintStyle: TextStyle(
                     color: _hasError && _contextController.text.isEmpty
-                        ? Colors.red
+                        ? AppTheme.errorColor
                         : Colors.grey[500],
                   ),
                   prefixIcon: Icon(
                     Icons.category,
                     color: _hasError && _contextController.text.isEmpty
-                        ? Colors.red
+                        ? AppTheme.errorColor
                         : Colors.grey,
                   ),
                   border: InputBorder.none,
@@ -460,7 +544,7 @@ class _ReviewModalState extends State<ReviewModal> {
               decoration: BoxDecoration(
                 border: Border.all(
                   color: _hasError && _reviewController.text.isEmpty
-                      ? Colors.red
+                      ? AppTheme.errorColor
                       : AppTheme.primaryColor,
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -475,7 +559,7 @@ class _ReviewModalState extends State<ReviewModal> {
                       : 'Write your review here...',
                   hintStyle: TextStyle(
                     color: _hasError && _reviewController.text.isEmpty
-                        ? Colors.red
+                        ? AppTheme.errorColor
                         : Colors.grey[500],
                   ),
                   prefixIcon: Padding(
@@ -483,7 +567,7 @@ class _ReviewModalState extends State<ReviewModal> {
                     child: Icon(
                       Icons.edit,
                       color: _hasError && _reviewController.text.isEmpty
-                          ? Colors.red
+                          ? AppTheme.errorColor
                           : Colors.grey,
                     ),
                   ),
@@ -557,11 +641,11 @@ class _ReviewModalState extends State<ReviewModal> {
                               ListTile(
                                 leading: const Icon(
                                   Icons.delete,
-                                  color: Colors.red,
+                                  color: AppTheme.errorColor,
                                 ),
                                 title: const Text(
                                   'Remove Photo',
-                                  style: TextStyle(color: Colors.red),
+                                  style: TextStyle(color: AppTheme.errorColor),
                                 ),
                                 onTap: () {
                                   Navigator.pop(context);
@@ -626,7 +710,7 @@ class _ReviewModalState extends State<ReviewModal> {
                           child: Container(
                             padding: const EdgeInsets.all(4),
                             decoration: const BoxDecoration(
-                              color: Colors.red,
+                              color: AppTheme.errorColor,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -685,21 +769,21 @@ class _ReviewModalState extends State<ReviewModal> {
                               decoration: BoxDecoration(
                                 color: Colors.grey[800],
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.red),
+                                border: Border.all(color: AppTheme.errorColor),
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   const Icon(
                                     Icons.broken_image,
-                                    color: Colors.red,
+                                    color: AppTheme.errorColor,
                                     size: 30,
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     'Failed',
                                     style: TextStyle(
-                                      color: Colors.red[300],
+                                      color: AppTheme.errorColor,
                                       fontSize: 8,
                                     ),
                                   ),
@@ -721,7 +805,7 @@ class _ReviewModalState extends State<ReviewModal> {
                           child: Container(
                             padding: const EdgeInsets.all(4),
                             decoration: const BoxDecoration(
-                              color: Colors.red,
+                              color: AppTheme.errorColor,
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -738,23 +822,45 @@ class _ReviewModalState extends State<ReviewModal> {
             ),
             const SizedBox(height: 24),
 
+            // Hapus Review
+            if (widget.isUpdate)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _isLoading ? null : _deleteReview,
+                    icon: Icon(
+                      Icons.delete_outline,
+                      color: AppTheme.textPrimary,
+                    ),
+                    label: Text(
+                      'Hapus Review',
+                      style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.errorColor,
+                      disabledBackgroundColor: AppTheme.errorColor.withOpacity(
+                        0.5,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
             // Submit button
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 onPressed: _isLoading ? null : _submitReview,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.secondaryColor,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  disabledBackgroundColor: AppTheme.secondaryColor.withOpacity(
-                    0.5,
-                  ),
-                ),
-                child: _isLoading
+                icon: _isLoading
                     ? const SizedBox(
                         height: 20,
                         width: 20,
@@ -765,15 +871,27 @@ class _ReviewModalState extends State<ReviewModal> {
                           ),
                         ),
                       )
-                    : Text(
-                        widget.isUpdate
-                            ? 'Update Review'
-                            : 'Submit Review', // ← Dynamic text
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    : Icon(
+                        widget.isUpdate ? Icons.edit : Icons.send,
+                        color: AppTheme.textPrimary,
                       ),
+                label: Text(
+                  widget.isUpdate ? 'Update Review' : 'Submit Review',
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.secondaryColor,
+                  disabledBackgroundColor: AppTheme.secondaryColor.withOpacity(
+                    0.5,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
           ],

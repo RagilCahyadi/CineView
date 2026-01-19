@@ -332,36 +332,11 @@ class _ExplorePageState extends State<ExplorePage> {
           const SizedBox(height: 6),
           Row(
             children: [
-              Row(
-                children: List.generate(5, (starIndex) {
-                  double rating = movie.voteAverage;
-                  double starValue = rating / 2;
-
-                  if (starIndex < starValue.floor()) {
-                    return const Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                      size: 14,
-                    );
-                  } else if (starIndex < starValue) {
-                    return const Icon(
-                      Icons.star_half,
-                      color: Colors.amber,
-                      size: 14,
-                    );
-                  } else {
-                    return Icon(
-                      Icons.star_border,
-                      color: Colors.grey[600],
-                      size: 14,
-                    );
-                  }
-                }),
-              ),
-              const SizedBox(width: 6),
+              const Icon(Icons.star, color: Colors.amber, size: 14),
+              const SizedBox(width: 4),
               Text(
-                '${movie.voteAverage.toStringAsFixed(1)}/10',
-                style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                'Tmdb Rating ${movie.voteAverage.toStringAsFixed(1)}/10',
+                style: TextStyle(color: Colors.grey[500], fontSize: 11),
               ),
             ],
           ),
