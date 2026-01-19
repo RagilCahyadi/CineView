@@ -13,4 +13,9 @@ class ApiConstants {
   // Reviews
   static const String reviews = '/reviews';
   static const String reviewsByMovie = '/reviews/movie';
+
+  // Profile
+  static const String profile = '/user';
+  static const String updateProfile = '/user/update';
+  static const String changePassword = '/user/change-password';
 }

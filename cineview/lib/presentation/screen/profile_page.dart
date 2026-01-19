@@ -1,33 +1,138 @@
 import 'package:cineview/core/theme/app_theme.dart';
-import 'package:cineview/data/models/dummy_data_film.dart';
-import 'package:cineview/data/services/auth_service.dart';
+import 'package:cineview/data/services/storage_service.dart';
+import 'package:cineview/data/services/review_services.dart';
+import 'package:cineview/data/services/watchlist_services.dart';
+import 'package:cineview/data/services/tmdb_service.dart';
+import 'package:cineview/data/models/movie_model.dart';
 import 'package:cineview/presentation/screen/settings_page.dart';
-import 'package:cineview/presentation/screen/login_page.dart';
+import 'package:cineview/presentation/screen/movie_detail_screen.dart';
+import 'package:cineview/presentation/screen/edit_profile_page.dart';
 import 'package:flutter/material.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final StorageService _storageService = StorageService();
+
+  String _userName = 'Loading...';
+  int _watchlistCount = 0;
+  int _reviewCount = 0;
+  double _averageRating = 0.0;
+  bool _isLoading = true;
+
+  List<dynamic> _watchlistItems = [];
+  List<dynamic> _userReviews = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      // Load user data
+      final user = await _storageService.getUser();
+
+      // Load watchlist
+      final watchlistService = WatchlistServices();
+      final watchlistResult = await watchlistService.getWatchlist();
+
+      // Load reviews
+      final reviewService = ReviewServices();
+      final reviewResult = await reviewService.getMyReviews();
+
+      if (mounted) {
+        setState(() {
+          _userName = user?['name'] ?? 'User';
+          _watchlistItems = (watchlistResult['data'] as List?) ?? [];
+          _userReviews = (reviewResult['data'] as List?) ?? [];
+          _watchlistCount = _watchlistItems.length;
+          _reviewCount = _userReviews.length;
+
+          // Calculate average rating
+          if (_userReviews.isNotEmpty) {
+            double totalRating = 0;
+            for (var review in _userReviews) {
+              totalRating += (review['rating'] ?? 0).toDouble();
+            }
+            _averageRating = totalRating / _userReviews.length;
+          }
+
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading user data: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _navigateToMovie(int movieId) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppTheme.primaryColor),
+      ),
+    );
+
+    try {
+      final tmdbService = TmdbService();
+      final details = await tmdbService.getMovieDetails(movieId);
+
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      final movie = MovieModel.fromJson(Map<String, dynamic>.from(details));
+
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => MovieDetailScreen(movie: movie)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load movie: $e')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              _buildProfileHeader(context),
-              const SizedBox(height: 24),
-              _buildStatsSection(),
-              const SizedBox(height: 16),
-              _buildRecentlyViewedSection(),
-              const SizedBox(height: 16),
-              _buildRatingsSection(),
-              const SizedBox(height: 100),
-            ],
-          ),
-        ),
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: AppTheme.primaryColor),
+              )
+            : RefreshIndicator(
+                onRefresh: _loadUserData,
+                color: AppTheme.primaryColor,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      _buildProfileHeader(context),
+                      const SizedBox(height: 24),
+                      _buildStatsSection(),
+                      const SizedBox(height: 16),
+                      _buildRecentlyViewedSection(),
+                      const SizedBox(height: 16),
+                      _buildRatingsSection(),
+                      const SizedBox(height: 100),
+                    ],
+                  ),
+                ),
+              ),
       ),
     );
   }
@@ -45,27 +150,42 @@ class ProfilePage extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.grey[700]!, width: 2),
-                  image: const DecorationImage(
-                    image: AssetImage('assets/images/avatar.jpg'),
-                    fit: BoxFit.cover,
-                  ),
+                  color: AppTheme.surfaceColor,
                 ),
+                child: const Icon(Icons.person, size: 50, color: Colors.grey),
               ),
               Positioned(
                 right: 0,
                 bottom: 0,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppTheme.backgroundColor,
-                      width: 2,
+                child: GestureDetector(
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const EditProfilePage(),
+                      ),
+                    );
+                    if (result == true) {
+                      _loadUserData();
+                    }
+                  },
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppTheme.backgroundColor,
+                        width: 2,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.edit,
+                      color: Colors.white,
+                      size: 14,
                     ),
                   ),
-                  child: const Icon(Icons.edit, color: Colors.white, size: 14),
                 ),
               ),
             ],
@@ -75,9 +195,9 @@ class ProfilePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-              const Text(
-                'BAHLIL',
-                style: TextStyle(
+              Text(
+                _userName,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -122,11 +242,17 @@ class ProfilePage extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _buildStatItem(Icons.star_outline, 'Ratings', '4.7 (65)'),
+            _buildStatItem(
+              Icons.star_outline,
+              'Ratings',
+              '${_averageRating.toStringAsFixed(1)} ($_reviewCount)',
+            ),
             Container(width: 1, height: 40, color: Colors.grey[800]),
-            _buildStatItem(Icons.bookmark_border, 'Watchlists', '26'),
-            Container(width: 1, height: 40, color: Colors.grey[800]),
-            _buildStatItem(Icons.calendar_today_outlined, 'List', '83'),
+            _buildStatItem(
+              Icons.bookmark_border,
+              'Watchlist',
+              '$_watchlistCount',
+            ),
           ],
         ),
       ),
@@ -165,10 +291,10 @@ class ProfilePage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.history, color: Colors.grey[400], size: 20),
+              Icon(Icons.bookmark, color: Colors.grey[400], size: 20),
               const SizedBox(width: 8),
               const Text(
-                'Recently Viewed',
+                'My Watchlist',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -178,44 +304,84 @@ class ProfilePage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            height: 175,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: contents.length > 3 ? 3 : contents.length,
-              itemBuilder: (context, index) {
-                return _buildMovieCard(contents[index]);
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'See All',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          _watchlistItems.isEmpty
+              ? SizedBox(
+                  height: 100,
+                  child: Center(
+                    child: Text(
+                      'No movies in watchlist',
+                      style: TextStyle(color: Colors.grey[500]),
+                    ),
                   ),
-                  SizedBox(width: 4),
-                  Icon(Icons.chevron_right, size: 20),
-                ],
-              ),
-            ),
-          ),
+                )
+              : SizedBox(
+                  height: 160,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _watchlistItems.length > 5
+                        ? 5
+                        : _watchlistItems.length,
+                    itemBuilder: (context, index) {
+                      return _buildWatchlistCard(_watchlistItems[index]);
+                    },
+                  ),
+                ),
         ],
       ),
+    );
+  }
+
+  Widget _buildWatchlistCard(dynamic item) {
+    final String posterPath = item['poster_path'] ?? '';
+    final String title = item['movie_title'] ?? 'Unknown';
+    final int movieId = item['movie_id'];
+
+    return GestureDetector(
+      onTap: () => _navigateToMovie(movieId),
+      child: Container(
+        width: 90,
+        margin: const EdgeInsets.only(right: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: posterPath.isNotEmpty
+                  ? Image.network(
+                      'https://image.tmdb.org/t/p/w200$posterPath',
+                      width: 90,
+                      height: 120,
+                      fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) => _buildPosterPlaceholder(),
+                    )
+                  : _buildPosterPlaceholder(),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPosterPlaceholder() {
+    return Container(
+      width: 90,
+      height: 120,
+      decoration: BoxDecoration(
+        color: Colors.grey[800],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Icon(Icons.movie, color: Colors.grey, size: 30),
     );
   }
 
@@ -235,7 +401,7 @@ class ProfilePage extends StatelessWidget {
               Icon(Icons.star_outline, color: Colors.grey[400], size: 20),
               const SizedBox(width: 8),
               const Text(
-                'Ratings',
+                'My Reviews',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -245,127 +411,86 @@ class ProfilePage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            height: 175,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: contents.length > 3 ? 3 : contents.length,
-              itemBuilder: (context, index) {
-                return _buildMovieCard(contents[index]);
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'See All',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          _userReviews.isEmpty
+              ? SizedBox(
+                  height: 100,
+                  child: Center(
+                    child: Text(
+                      'No reviews yet',
+                      style: TextStyle(color: Colors.grey[500]),
+                    ),
                   ),
-                  SizedBox(width: 4),
-                  Icon(Icons.chevron_right, size: 20),
-                ],
-              ),
-            ),
-          ),
+                )
+              : SizedBox(
+                  height: 160,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _userReviews.length > 5
+                        ? 5
+                        : _userReviews.length,
+                    itemBuilder: (context, index) {
+                      return _buildReviewCard(_userReviews[index]);
+                    },
+                  ),
+                ),
         ],
       ),
     );
   }
 
-  Widget _buildMovieCard(DummyDataFilm film) {
-    return Container(
-      width: 100,
-      margin: const EdgeInsets.only(right: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  film.image,
-                  width: 100,
-                  height: 130,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 100,
-                      height: 130,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.movie,
-                        color: Colors.grey,
-                        size: 40,
-                      ),
-                    );
-                  },
-                ),
+  Widget _buildReviewCard(dynamic review) {
+    final String movieTitle = review['movie_title'] ?? 'Unknown';
+    final int rating = review['rating'] ?? 0;
+    final int movieId = review['movie_id'];
+
+    return GestureDetector(
+      onTap: () => _navigateToMovie(movieId),
+      child: Container(
+        width: 140,
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.backgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[800]!),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              movieTitle,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
-              Positioned(
-                top: 6,
-                right: 6,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.star, color: Colors.white, size: 10),
-                      const SizedBox(width: 2),
-                      Text(
-                        film.rating,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            film.title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            film.year,
-            style: TextStyle(color: Colors.grey[500], fontSize: 10),
-          ),
-        ],
+            const Spacer(),
+            Row(
+              children: [
+                const Icon(Icons.star, color: Colors.amber, size: 16),
+                const SizedBox(width: 4),
+                Text(
+                  '$rating/10',
+                  style: const TextStyle(
+                    color: Colors.amber,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              review['context'] ?? '',
+              style: TextStyle(color: Colors.grey[500], fontSize: 10),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
