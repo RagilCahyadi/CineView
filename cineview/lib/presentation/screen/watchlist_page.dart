@@ -2,6 +2,9 @@ import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/services/watchlist_services.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:cineview/data/models/movie_model.dart';
+import 'package:cineview/data/services/tmdb_service.dart';
+import 'package:cineview/presentation/screen/movie_detail_screen.dart';
 
 class WatchlistPage extends StatefulWidget {
   const WatchlistPage({super.key});
@@ -39,6 +42,46 @@ class _WatchlistPageState extends State<WatchlistPage> {
         _errorMessage = result['message'];
       }
     });
+  }
+
+  Future<void> _navigateToDetail(int movieId) async {
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppTheme.primaryColor),
+      ),
+    );
+
+    try {
+      final tmdbService = TmdbService();
+      final details = await tmdbService.getMovieDetails(movieId);
+
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      // Create MovieModel from API data
+      final movie = MovieModel.fromJson(Map<String, dynamic>.from(details));
+
+      // Navigate to detail screen
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => MovieDetailScreen(movie: movie)),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      // Show error
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load movie: $e')));
+      }
+    }
   }
 
   Future<void> _removeFromWatchlist(int watchlistId, int index) async {
@@ -106,7 +149,6 @@ class _WatchlistPageState extends State<WatchlistPage> {
     return _buildWatchlistGrid();
   }
 
-  // ============ SKELETON LOADING ============
   Widget _buildSkeletonGrid() {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
@@ -260,12 +302,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
 
     return GestureDetector(
       onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Movie ID: ${item['movie_id']}'),
-            duration: const Duration(seconds: 1),
-          ),
-        );
+        _navigateToDetail(item['movie_id']);
       },
       child: Container(
         decoration: BoxDecoration(
