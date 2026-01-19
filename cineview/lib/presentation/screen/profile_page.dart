@@ -1,4 +1,5 @@
 import 'package:cineview/core/theme/app_theme.dart';
+import 'package:cineview/core/constants/api_constants.dart';
 import 'package:cineview/data/services/auth_service.dart';
 import 'package:cineview/data/services/storage_service.dart';
 import 'package:cineview/data/services/review_services.dart';
@@ -20,6 +21,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final StorageService _storageService = StorageService();
 
   String _userName = 'Loading...';
+  String? _userProfilePhoto;
   int _watchlistCount = 0;
   int _reviewCount = 0;
   double _averageRating = 0.0;
@@ -59,6 +61,10 @@ class _ProfilePageState extends State<ProfilePage> {
       if (mounted) {
         setState(() {
           _userName = user?['name'] ?? 'User';
+          if (user != null && user['profile_photo'] != null) {
+            _userProfilePhoto =
+                '${ApiConstants.storageUrl}/${user['profile_photo']}';
+          }
           _watchlistItems = (watchlistResult['data'] as List?) ?? [];
           _userReviews = (reviewResult['data'] as List?) ?? [];
           _watchlistCount = _watchlistItems.length;
@@ -162,7 +168,22 @@ class _ProfilePageState extends State<ProfilePage> {
                   border: Border.all(color: Colors.grey[700]!, width: 2),
                   color: AppTheme.surfaceColor,
                 ),
-                child: const Icon(Icons.person, size: 50, color: Colors.grey),
+                child: _userProfilePhoto != null
+                    ? ClipOval(
+                        child: Image.network(
+                          _userProfilePhoto!,
+                          fit: BoxFit.cover,
+                          width: 100,
+                          height: 100,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(
+                                Icons.person,
+                                size: 50,
+                                color: Colors.grey,
+                              ),
+                        ),
+                      )
+                    : const Icon(Icons.person, size: 50, color: Colors.grey),
               ),
               Positioned(
                 right: 0,

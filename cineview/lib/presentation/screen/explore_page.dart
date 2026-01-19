@@ -14,7 +14,6 @@ class ExplorePage extends StatefulWidget {
 }
 
 class _ExplorePageState extends State<ExplorePage> {
-  final _searchController = TextEditingController();
   final TmdbService _tmdbService = TmdbService();
 
   final List<String> _categories = [
@@ -31,6 +30,7 @@ class _ExplorePageState extends State<ExplorePage> {
   List<int>? _filterGenres;
   int? _filterYear;
   String? _filterCertification;
+  // ignore: unused_field
   bool _isFiltered = false;
 
   @override

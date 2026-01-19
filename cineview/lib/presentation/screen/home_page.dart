@@ -10,6 +10,7 @@ import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/models/movie_model.dart';
 import 'package:cineview/data/models/actor_model.dart';
 import 'package:cineview/data/services/tmdb_service.dart';
+import 'package:cineview/data/services/watchlist_services.dart';
 import 'package:cineview/presentation/widgets/film_populer_section.dart';
 import 'package:cineview/presentation/widgets/search_bar_widget.dart';
 import 'package:cineview/presentation/widgets/hot_trailer_section.dart';
@@ -180,6 +181,31 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<void> _addToWatchlist(MovieModel movie) async {
+    final watchlistService = WatchlistServices();
+    final result = await watchlistService.addMovieToWatchlist(
+      movieId: movie.id,
+      movieTitle: movie.title,
+      posterPath: movie.posterPath,
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result['success'] == true
+              ? '${movie.title} added to watchlist!'
+              : result['message'] ?? 'Failed to add to watchlist',
+        ),
+        backgroundColor: result['success'] == true
+            ? Colors.green
+            : AppTheme.errorColor,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -267,10 +293,7 @@ class _HomePageState extends State<HomePage> {
             currentIndex: _currentPage,
             totalCount: _trendingMovies.length > 5 ? 5 : _trendingMovies.length,
             onMoreInfo: () => _navigateToMovieDetail(movie),
-            onAddToWatchlist: () {
-              // TODO: Implementasi add to watchlist
-              log('Add to watchlist: ${movie.title}');
-            },
+            onAddToWatchlist: () => _addToWatchlist(movie),
           );
         },
       ),
