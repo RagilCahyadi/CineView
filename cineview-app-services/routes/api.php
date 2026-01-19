@@ -5,13 +5,18 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\WatchlistController;
 use App\Http\Controllers\Api\ReviewController;
 
-Route::post('/register',[AuthController::class,'register']);
-Route::post('/login',[AuthController::class,'login']);
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/reviews/movie/{movie_id}', [ReviewController::class, 'getByMovie']);
 
-Route::middleware('auth:sanctum')->group(function(){
-    Route::post('/logout',[AuthController::class,'logout']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+    // User Profile Routes
+    Route::get('/user', [AuthController::class, 'getProfile']);
+    Route::post('/user/update', [AuthController::class, 'updateProfile']);
+    Route::post('/user/change-password', [AuthController::class, 'changePassword']);
 
     // Watchlist Routes
     Route::get('/watchlist', [WatchlistController::class, 'index']);

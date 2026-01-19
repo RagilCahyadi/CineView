@@ -1,68 +1,129 @@
-import 'package:cineview/core/theme/app_theme.dart';
-import 'package:cineview/data/models/dummy_data_actor.dart';
-import 'package:cineview/data/models/dummy_data_film.dart';
 import 'package:flutter/material.dart';
+import 'package:cineview/core/theme/app_theme.dart';
+import 'package:cineview/data/models/actor_model.dart';
+import 'package:cineview/data/models/movie_model.dart';
+import 'package:cineview/data/services/tmdb_service.dart';
+import 'package:cineview/presentation/screen/movie_detail_screen.dart';
 
-class ActorDetailPage extends StatelessWidget {
-  final DummyDataActor actor;
+class ActorDetailPage extends StatefulWidget {
+  final ActorModel actor;
 
   const ActorDetailPage({super.key, required this.actor});
+
+  @override
+  State<ActorDetailPage> createState() => _ActorDetailPageState();
+}
+
+class _ActorDetailPageState extends State<ActorDetailPage> {
+  final TmdbService _tmdbService = TmdbService();
+
+  Map<String, dynamic>? _actorDetails;
+  List<MovieModel> _movieCredits = [];
+  bool _isLoading = true;
+  bool _isExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadActorDetails();
+  }
+
+  Future<void> _loadActorDetails() async {
+    try {
+      final details = await _tmdbService.getPersonDetails(widget.actor.id);
+      final credits = await _tmdbService.getPersonMovieCredits(widget.actor.id);
+
+      if (mounted) {
+        setState(() {
+          _actorDetails = Map<String, dynamic>.from(details);
+
+          // Parse movie credits (cast)
+          final castList = credits['cast'] as List? ?? [];
+          _movieCredits = castList
+              .where((movie) => movie['poster_path'] != null)
+              .take(20)
+              .map((json) => MovieModel.fromJson(json))
+              .toList();
+
+          // Sort by popularity
+          _movieCredits.sort((a, b) => b.popularity.compareTo(a.popularity));
+
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading actor details: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeroImage(context),
-
-            Padding(
-              padding: EdgeInsets.all(20),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryColor),
+            )
+          : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildNameSection(),
-                  SizedBox(height: 24),
-
-                  _buildStatsRow(),
-                  SizedBox(height: 24),
-
-                  _buildInfoCards(),
-                  SizedBox(height: 24),
-
-                  _buildBiography(),
-                  SizedBox(height: 24),
-
-                  _buildFilmography(),
-                  SizedBox(height: 40),
+                  _buildHeroImage(context),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildNameSection(),
+                        const SizedBox(height: 24),
+                        _buildStatsRow(),
+                        const SizedBox(height: 24),
+                        _buildInfoCards(),
+                        const SizedBox(height: 24),
+                        if (_actorDetails?['biography'] != null &&
+                            (_actorDetails!['biography'] as String).isNotEmpty)
+                          _buildBiography(),
+                        const SizedBox(height: 24),
+                        if (_movieCredits.isNotEmpty) _buildFilmography(),
+                        const SizedBox(height: 100),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
   Widget _buildHeroImage(BuildContext context) {
-    return Container(
+    final profileUrl = widget.actor.profilePath != null
+        ? 'https://image.tmdb.org/t/p/w500${widget.actor.profilePath}'
+        : null;
+
+    return SizedBox(
       height: 380,
       width: double.infinity,
       child: Stack(
         children: [
-          Container(
-            height: 380,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage(actor.image),
-                fit: BoxFit.cover,
+          if (profileUrl != null)
+            Container(
+              height: 380,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(profileUrl),
+                  fit: BoxFit.cover,
+                ),
               ),
+            )
+          else
+            Container(
+              height: 380,
+              width: double.infinity,
+              color: AppTheme.surfaceColor,
+              child: const Icon(Icons.person, size: 100, color: Colors.grey),
             ),
-          ),
-
           Container(
             height: 380,
             decoration: BoxDecoration(
@@ -72,13 +133,12 @@ class ActorDetailPage extends StatelessWidget {
                 colors: [
                   Colors.transparent,
                   Colors.transparent,
-                  AppTheme.backgroundColor.withOpacity(0.9),
+                  AppTheme.backgroundColor.withValues(alpha: 0.9),
                   AppTheme.backgroundColor,
                 ],
               ),
             ),
           ),
-
           Positioned(
             top: 50,
             left: 20,
@@ -88,37 +148,19 @@ class ActorDetailPage extends StatelessWidget {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.4),
+                  color: Colors.black.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.arrow_back_ios_new,
                   color: Colors.white,
                   size: 18,
                 ),
               ),
-            ),
-          ),
-
-          Positioned(
-            top: 50,
-            right: 20,
-            child: Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              child: Icon(Icons.favorite_border, color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -131,18 +173,17 @@ class ActorDetailPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          actor.fullName,
-          style: TextStyle(
+          widget.actor.name,
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 28,
             fontWeight: FontWeight.bold,
             letterSpacing: 0.5,
           ),
         ),
-        SizedBox(height: 12),
-
+        const SizedBox(height: 12),
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: AppTheme.primaryColor,
             borderRadius: BorderRadius.circular(25),
@@ -150,11 +191,11 @@ class ActorDetailPage extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.verified, color: Colors.white, size: 16),
-              SizedBox(width: 6),
+              const Icon(Icons.verified, color: Colors.white, size: 16),
+              const SizedBox(width: 6),
               Text(
-                'Popular Actor',
-                style: TextStyle(
+                widget.actor.knownForDepartment ?? 'Actor',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -169,7 +210,7 @@ class ActorDetailPage extends StatelessWidget {
 
   Widget _buildStatsRow() {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(20),
@@ -179,24 +220,20 @@ class ActorDetailPage extends StatelessWidget {
         children: [
           _buildStatItem(
             icon: Icons.movie_creation_outlined,
-            value: '${actor.movies.length}',
+            value: '${_movieCredits.length}',
             label: 'Movies',
           ),
-
           Container(width: 1, height: 50, color: AppTheme.dividerColor),
-
           _buildStatItem(
             icon: Icons.star_outline,
-            value: '4.9',
-            label: 'Rating',
+            value: widget.actor.popularity.toStringAsFixed(1),
+            label: 'Popularity',
           ),
-
           Container(width: 1, height: 50, color: AppTheme.dividerColor),
-
           _buildStatItem(
-            icon: Icons.emoji_events_outlined,
-            value: '12',
-            label: 'Awards',
+            icon: Icons.person_outline,
+            value: widget.actor.genderDisplay,
+            label: 'Gender',
           ),
         ],
       ),
@@ -211,19 +248,19 @@ class ActorDetailPage extends StatelessWidget {
     return Column(
       children: [
         Icon(icon, color: AppTheme.primaryColor, size: 24),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.white,
-            fontSize: 20,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
         ),
       ],
     );
@@ -236,16 +273,15 @@ class ActorDetailPage extends StatelessWidget {
           child: _buildInfoCard(
             icon: Icons.cake_outlined,
             title: 'Birthday',
-            subtitle: actor.birthDate,
+            subtitle: _actorDetails?['birthday'] ?? '-',
           ),
         ),
-        SizedBox(width: 16),
-
+        const SizedBox(width: 16),
         Expanded(
           child: _buildInfoCard(
             icon: Icons.location_on_outlined,
             title: 'Birthplace',
-            subtitle: actor.birthPlace,
+            subtitle: _actorDetails?['place_of_birth'] ?? '-',
           ),
         ),
       ],
@@ -258,7 +294,7 @@ class ActorDetailPage extends StatelessWidget {
     required String subtitle,
   }) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(16),
@@ -271,22 +307,20 @@ class ActorDetailPage extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.15),
+              color: AppTheme.primaryColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: AppTheme.primaryColor, size: 22),
           ),
-          SizedBox(height: 14),
-
+          const SizedBox(height: 14),
           Text(
             title,
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
           ),
-          SizedBox(height: 4),
-
+          const SizedBox(height: 4),
           Text(
             subtitle,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -300,6 +334,9 @@ class ActorDetailPage extends StatelessWidget {
   }
 
   Widget _buildBiography() {
+    final biography = _actorDetails!['biography'] as String;
+    final maxLines = _isExpanded ? null : 5;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -313,8 +350,8 @@ class ActorDetailPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            SizedBox(width: 10),
-            Text(
+            const SizedBox(width: 10),
+            const Text(
               'Biography',
               style: TextStyle(
                 color: Colors.white,
@@ -324,22 +361,42 @@ class ActorDetailPage extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(height: 14),
-
+        const SizedBox(height: 14),
         Container(
           width: double.infinity,
-          padding: EdgeInsets.all(18),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: AppTheme.surfaceColor,
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Text(
-            actor.biography,
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 14,
-              height: 1.7,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                biography,
+                maxLines: maxLines,
+                overflow: _isExpanded ? null : TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
+                  height: 1.7,
+                ),
+              ),
+              if (biography.length > 200)
+                GestureDetector(
+                  onTap: () => setState(() => _isExpanded = !_isExpanded),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      _isExpanded ? 'Show less' : 'Read more',
+                      style: const TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ],
@@ -363,8 +420,8 @@ class ActorDetailPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                SizedBox(width: 10),
-                Text(
+                const SizedBox(width: 10),
+                const Text(
                   'Filmography',
                   style: TextStyle(
                     color: Colors.white,
@@ -374,16 +431,15 @@ class ActorDetailPage extends StatelessWidget {
                 ),
               ],
             ),
-
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.2),
+                color: AppTheme.primaryColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                '${actor.movies.length} Films',
-                style: TextStyle(
+                '${_movieCredits.length} Films',
+                style: const TextStyle(
                   color: AppTheme.primaryColor,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -392,15 +448,14 @@ class ActorDetailPage extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(height: 16),
-
+        const SizedBox(height: 16),
         SizedBox(
           height: 220,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: actor.movies.length,
+            itemCount: _movieCredits.length,
             itemBuilder: (context, index) {
-              return _buildFilmCard(actor.movies[index]);
+              return _buildFilmCard(_movieCredits[index]);
             },
           ),
         ),
@@ -408,77 +463,107 @@ class ActorDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFilmCard(DummyDataFilm film) {
-    return Container(
-      width: 130,
-      margin: EdgeInsets.only(right: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 160,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              image: DecorationImage(
-                image: AssetImage(film.image),
-                fit: BoxFit.cover,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.7),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.star, color: Colors.amber, size: 12),
-                        SizedBox(width: 3),
-                        Text(
-                          film.rating,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
+  Widget _buildFilmCard(MovieModel movie) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => MovieDetailScreen(movie: movie)),
+        );
+      },
+      child: Container(
+        width: 130,
+        margin: const EdgeInsets.only(right: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 160,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
                   ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      'https://image.tmdb.org/t/p/w200${movie.posterPath}',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: AppTheme.surfaceColor,
+                        child: const Icon(
+                          Icons.movie,
+                          color: Colors.grey,
+                          size: 40,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                              size: 12,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              movie.voteAverage.toStringAsFixed(1),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-          SizedBox(height: 10),
-
-          Text(
-            film.title,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+            const SizedBox(height: 10),
+            Text(
+              movie.title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-
-          Text(
-            film.year,
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
-          ),
-        ],
+            Text(
+              (movie.releaseDate != null && movie.releaseDate!.length >= 4)
+                  ? movie.releaseDate!.substring(0, 4)
+                  : '-',
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
