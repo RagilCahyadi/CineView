@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
 import 'package:cineview/data/services/auth_service.dart';
+import 'package:cineview/data/services/storage_service.dart';
 import 'package:cineview/presentation/screen/login_page.dart';
 import 'package:cineview/presentation/screen/edit_profile_page.dart';
 import 'package:cineview/presentation/screen/change_password_page.dart';
@@ -16,7 +17,42 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  final StorageService _storageService = StorageService();
   bool notifOn = true;
+  String _userName = 'Loading...';
+  String _userEmail = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    // First try local storage
+    var user = await _storageService.getUser();
+
+    // If no local data, try to fetch from API
+    if (user == null) {
+      final authService = AuthService();
+      final result = await authService.getProfile();
+      if (result['success'] == true) {
+        user = result['user'];
+      }
+    }
+
+    if (mounted && user != null) {
+      setState(() {
+        _userName = user!['name'] ?? 'User';
+        _userEmail = user['email'] ?? '';
+      });
+    } else if (mounted) {
+      setState(() {
+        _userName = 'User';
+        _userEmail = '';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,33 +122,39 @@ class _SettingsPageState extends State<SettingsPage> {
                                   color: AppTheme.dividerColor,
                                   width: 2,
                                 ),
-                                image: DecorationImage(
-                                  image: AssetImage('assets/images/avatar.jpg'),
-                                  fit: BoxFit.cover,
-                                ),
+                                color: AppTheme.surfaceColor,
+                              ),
+                              child: const Icon(
+                                Icons.person,
+                                color: Colors.grey,
+                                size: 30,
                               ),
                             ),
                             SizedBox(width: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'BAHLIL',
-                                  style: TextStyle(
-                                    color: AppTheme.textPrimary,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _userName,
+                                    style: TextStyle(
+                                      color: AppTheme.textPrimary,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'bahlil123@gmail.com',
-                                  style: TextStyle(
-                                    color: AppTheme.textSecondary,
-                                    fontSize: 14,
+                                  SizedBox(height: 4),
+                                  Text(
+                                    _userEmail,
+                                    style: TextStyle(
+                                      color: AppTheme.textSecondary,
+                                      fontSize: 14,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                             Spacer(),
                             Container(
