@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cineview/core/theme/app_theme.dart';
+import 'package:cineview/data/services/auth_service.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -10,6 +11,7 @@ class ChangePasswordPage extends StatefulWidget {
 
 class _ChangePasswordPageState extends State<ChangePasswordPage> {
   final _formKey = GlobalKey<FormState>();
+  final _authService = AuthService();
 
   final _oldPasswordCtr = TextEditingController();
   final _newPasswordCtr = TextEditingController();
@@ -17,6 +19,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   bool _hideOldPassword = true;
   bool _hideNewPassword = true;
   bool _hideConfirmPassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -26,12 +29,47 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     super.dispose();
   }
 
-  void _handleUpdatePassword() {
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Password updated successfully!")),
+  Future<void> _handleUpdatePassword() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await _authService.changePassword(
+        oldPassword: _oldPasswordCtr.text,
+        newPassword: _newPasswordCtr.text,
+        confirmPassword: _confirmPasswordCtr.text,
       );
-      Navigator.pop(context);
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result['message'] ?? 'Password updated successfully!',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Failed to update password'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: AppTheme.errorColor,
+        ),
+      );
     }
   }
 
@@ -356,19 +394,32 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
+                        disabledBackgroundColor: AppTheme.primaryColor
+                            .withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: _handleUpdatePassword,
-                      child: const Text(
-                        'Update Password',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
+                      onPressed: _isLoading ? null : _handleUpdatePassword,
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              'Update Password',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
 
