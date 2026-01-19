@@ -21,7 +21,7 @@ class MovieDetailScreen extends StatefulWidget {
   State<MovieDetailScreen> createState() => _MovieDetailScreenState();
 }
 
-class _MovieDetailScreenState extends State<MovieDetailScreen> {
+class   _MovieDetailScreenState extends State<MovieDetailScreen> {
   bool _hasReviewed = false;
   bool _isCheckingReview = true;
   int? _existingReviewId;
