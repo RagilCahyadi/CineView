@@ -25,14 +25,18 @@ class _HotTrailerSectionState extends State<HotTrailerSection> {
   Future<void> _loadTrailers() async {
     try {
       final trailers = await _tmdbService.getHotTrailers(limit: 5);
-      setState(() {
-        _trailers = trailers;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _trailers = trailers;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
