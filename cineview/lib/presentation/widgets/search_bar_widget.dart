@@ -9,10 +9,12 @@ class SearchBarWidget extends StatefulWidget {
     super.key,
     this.hintText = "Mencari sesuatu?",
     this.showTuneIcon = false,
+    this.onFilterTap,
   });
 
   final String hintText;
   final bool showTuneIcon;
+  final VoidCallback? onFilterTap;
 
   @override
   State<SearchBarWidget> createState() => _SearchBarWidgetState();
@@ -80,7 +82,15 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
             ),
             leading: const Icon(Icons.search, color: AppTheme.textSecondary),
             trailing: widget.showTuneIcon
-                ? [const Icon(Icons.tune, color: AppTheme.textSecondary)]
+                ? [
+                    GestureDetector(
+                      onTap: widget.onFilterTap,
+                      child: const Icon(
+                        Icons.tune,
+                        color: AppTheme.textSecondary,
+                      ),
+                    ),
+                  ]
                 : null,
             onChanged: _search,
             backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
